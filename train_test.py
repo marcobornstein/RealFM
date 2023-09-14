@@ -2,7 +2,7 @@ import torch
 import time
 
 
-def local_training(model, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency):
+def local_training(model, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency, recorder):
     i = 1
     for epoch in range(1, epochs + 1):  # loop over the dataset multiple times
         running_loss = 0.0
@@ -28,12 +28,18 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
 
             # compute running accuracy
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            num_examples = labels.size(0)
+            num_correct = (predicted == labels).sum().item()
+            total += num_examples
+            correct += num_correct
 
             # print statistics
-            running_loss += loss.item()
-            running_time += (time.time() - init_time)
+            loss_val = loss.item()
+            running_loss += loss_val
+            comp_time = time.time() - init_time
+            running_time += comp_time
+            recorder.add_new(comp_time, 0, num_correct/num_examples, loss_val)
+
             if i % log_frequency == 0:  # print every X mini-batches
                 print(f' step: {i}, loss: {running_loss / log_frequency:.3f}, '
                       f'accuracy: {100* correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
@@ -41,14 +47,15 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
                 running_time = 0.0
                 total = 0
                 correct = 0
+                recorder.save_to_file()
 
             i += 1
 
-        test(model, testloader, device)
+        test(model, testloader, device, recorder)
 
 
 def federated_training(model, communicator, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency,
-                       local_steps=3):
+                       recorder, local_steps=3):
     i = 1
     for epoch in range(1, epochs + 1):  # loop over the dataset multiple times
         running_loss = 0.0
@@ -74,12 +81,25 @@ def federated_training(model, communicator, trainloader, testloader, device, los
 
             # compute running accuracy
             _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
+            num_examples = labels.size(0)
+            num_correct = (predicted == labels).sum().item()
+            total += num_examples
+            correct += num_correct
 
             # print statistics
-            running_loss += loss.item()
-            running_time += (time.time() - init_time)
+            loss_val = loss.item()
+            running_loss += loss_val
+            comp_time = time.time() - init_time
+            running_time += comp_time
+
+            # perform FedAvg/D-SGD every K steps
+            if i % local_steps == 0:
+                comm_time = communicator.communicate(model)
+            else:
+                comm_time = 0
+
+            recorder.add_new(comp_time, comm_time, num_correct / num_examples, loss_val)
+
             if i % log_frequency == 0:  # print every X mini-batches
                 print(f' step: {i}, loss: {running_loss / log_frequency:.3f}, '
                       f'accuracy: {100 * correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
@@ -87,17 +107,14 @@ def federated_training(model, communicator, trainloader, testloader, device, los
                 total = 0
                 correct = 0
                 running_time = 0.0
-
-            # perform FedAvg/D-SGD every K steps
-            if i % local_steps == 0:
-                comm_time = communicator.communicate(model)
+                recorder.save_to_file()
 
             i += 1
 
-        test(model, testloader, device)
+        test(model, testloader, device, recorder)
 
 
-def test(model, test_dl, device, test_batches=30, epoch=False):
+def test(model, test_dl, device, recorder, test_batches=30, epoch=False):
     correct = 0
     total = 0
     i = 1
@@ -121,4 +138,6 @@ def test(model, test_dl, device, test_batches=30, epoch=False):
 
             i += 1
 
-    print(f'Accuracy of the network on the {total} test images: {100 * correct / total: .3f}%')
+    test_acc = correct / total
+    recorder.add_test_accuracy(test_acc, epoch=epoch)
+    print(f'Accuracy of the network on the {total} test images: {100 * test_acc: .3f}%')
