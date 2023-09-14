@@ -26,6 +26,7 @@ if __name__ == '__main__':
     learning_rate = config['lr']
     epochs = config['epochs']
     log_frequency = config['log_frequency']
+    marginal_cost = config['marginal_cost']
 
     # set seed for reproducibility
     # torch.manual_seed(seed)
@@ -51,12 +52,12 @@ if __name__ == '__main__':
     FLC = Communicator(rank, size, comm, device)
 
     # initialize recorder
-    recorder = Recorder(config, dataset)
+    recorder = Recorder(rank, config, dataset)
 
     # determine local data contributions
     # create different payoff functions as well (might multiply by a constant out front of the payoff function)
     # marginal_cost = np.random.uniform(9e-3, 0.0099)
-    marginal_cost = 5e-3
+    # marginal_cost = 5e-3
     # marginal_cost = 1e-3
     optimal_updates_local = optimal_data_local(marginal_cost)
 
