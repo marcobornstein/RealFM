@@ -1,6 +1,12 @@
 from mpi4py import MPI
 import numpy as np
 import os
+import datetime
+
+
+def date_string(date):
+    return date.day * 1000000 + date.hour*10000 + date.minute*100 + date.second
+
 
 
 class Recorder(object):
@@ -16,23 +22,29 @@ class Recorder(object):
 
         if rank == 0:
             if not os.path.isdir(self.saveFolderName):
-                flag = np.array([0], dtype=np.int32)
+                flag = np.array([0, 0], dtype=np.int32)
                 os.mkdir(self.saveFolderName)
                 with open(self.saveFolderName + '/ExpDescription', 'w') as f:
                     f.write(str(config) + '\n')
             else:
-                flag = np.array([1], dtype=np.int32)
-                os.mkdir(self.saveFolderName + '1')
-                with open(self.saveFolderName + '1' + '/ExpDescription', 'w') as f:
+                current_date = datetime.datetime.now()
+                val = date_string(current_date)
+                add_on = "-" + str(date_string(current_date))
+                flag = np.array([1, int(val)], dtype=np.int32)
+                self.saveFolderName = self.saveFolderName + add_on
+                os.mkdir(self.saveFolderName)
+                with open(self.saveFolderName + '/ExpDescription', 'w') as f:
                     f.write(str(config) + '\n')
             MPI.COMM_WORLD.Bcast(flag, root=0)
 
         else:
-            flag = np.empty(1, dtype=np.int32)
+            flag = np.empty(2, dtype=np.int32)
             MPI.COMM_WORLD.Bcast(flag, root=0)
 
         if flag[0]:
-            self.saveFolderName = self.saveFolderName + '1'
+            add_on = str(flag[1])
+            if rank > 0:
+                self.saveFolderName = self.saveFolderName + '-' + add_on
 
         MPI.COMM_WORLD.Barrier()
 

@@ -1,3 +1,4 @@
+from mpi4py import MPI
 import torch
 import time
 
@@ -41,7 +42,7 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
             recorder.add_new(comp_time, 0, num_correct/num_examples, loss_val)
 
             if i % log_frequency == 0:  # print every X mini-batches
-                print(f' step: {i}, loss: {running_loss / log_frequency:.3f}, '
+                print(f' [rank {recorder.rank}] step: {i}, loss: {running_loss / log_frequency:.3f}, '
                       f'accuracy: {100* correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
                 running_loss = 0.0
                 running_time = 0.0
@@ -52,6 +53,7 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
             i += 1
 
         test(model, testloader, device, recorder)
+        MPI.COMM_WORLD.Barrier()
 
 
 def federated_training(model, communicator, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency,
@@ -101,7 +103,7 @@ def federated_training(model, communicator, trainloader, testloader, device, los
             recorder.add_new(comp_time, comm_time, num_correct / num_examples, loss_val)
 
             if i % log_frequency == 0:  # print every X mini-batches
-                print(f' step: {i}, loss: {running_loss / log_frequency:.3f}, '
+                print(f' [rank {recorder.rank}] step: {i}, loss: {running_loss / log_frequency:.3f}, '
                       f'accuracy: {100 * correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
                 running_loss = 0.0
                 total = 0
@@ -112,6 +114,7 @@ def federated_training(model, communicator, trainloader, testloader, device, los
             i += 1
 
         test(model, testloader, device, recorder)
+        MPI.COMM_WORLD.Barrier()
 
 
 def test(model, test_dl, device, recorder, test_batches=30, epoch=False):
@@ -140,4 +143,4 @@ def test(model, test_dl, device, recorder, test_batches=30, epoch=False):
 
     test_acc = correct / total
     recorder.add_test_accuracy(test_acc, epoch=epoch)
-    print(f'Accuracy of the network on the {total} test images: {100 * test_acc: .3f}%')
+    print(f'[rank {recorder.rank}] test accuracy on {total} images: {100 * test_acc: .3f}%')
