@@ -117,7 +117,7 @@ def federated_training(model, communicator, trainloader, testloader, device, los
         MPI.COMM_WORLD.Barrier()
 
 
-def test(model, test_dl, device, recorder, test_batches=30, epoch=False):
+def test(model, test_dl, device, recorder, test_batches=30, epoch=True):
     correct = 0
     total = 0
     i = 1

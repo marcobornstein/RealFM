@@ -27,6 +27,7 @@ if __name__ == '__main__':
     epochs = config['epochs']
     log_frequency = config['log_frequency']
     marginal_cost = config['marginal_cost']
+    local_steps = config['local_steps']
 
     # set seed for reproducibility
     # torch.manual_seed(seed)
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     print('Beginning Training...')
     # local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency, recorder)
     federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
-                       recorder)
+                       recorder, local_steps=local_steps)
 
     print('Finished Training')
 
