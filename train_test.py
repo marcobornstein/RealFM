@@ -44,7 +44,7 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
 
             i += 1
 
-        test(model, testloader)
+        test(model, testloader, device)
 
 
 def federated_training(model, communicator, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency,
@@ -94,9 +94,9 @@ def federated_training(model, communicator, trainloader, testloader, device, los
 
             i += 1
 
-        test(model, testloader)
+        test(model, testloader, device)
 
-def test(model, test_dl, test_batches=30, epoch=False):
+def test(model, test_dl, device, test_batches=30, epoch=False):
     correct = 0
     total = 0
     i = 1
@@ -105,6 +105,8 @@ def test(model, test_dl, test_batches=30, epoch=False):
     with torch.no_grad():
         for data in test_dl:
             images, labels = data
+            inputs = inputs.to(device)
+            labels = labels.to(device)
             # calculate outputs by running images through the network
             outputs = model(images)
             # the class with the highest energy is what we choose as prediction
