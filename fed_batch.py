@@ -68,10 +68,13 @@ if __name__ == '__main__':
     # synchronize models (so they are identical initially)
     FLC.sync_models(model)
 
+    # load model onto GPU (if available)
+    model.to(device)
+
     # run local training (no federated mechanism)
     print('Beginning Training...')
-    # local_training(model, trainloader, testloader, criterion, optimizer, epochs, log_frequency)
-    federated_training(model, FLC, trainloader, testloader, criterion, optimizer, epochs, log_frequency)
+    # local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency)
+    federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency)
 
     print('Finished Training')
 

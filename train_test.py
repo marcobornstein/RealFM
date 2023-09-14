@@ -1,20 +1,25 @@
 import torch
+import time
 
 
-def local_training(model, trainloader, testloader, loss_fn, optimizer, epochs, log_frequency):
+def local_training(model, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency):
     i = 1
     for epoch in range(1, epochs + 1):  # loop over the dataset multiple times
         running_loss = 0.0
         total = 0
         correct = 0
+        running_time = 0.0
         model.train()
         for data in trainloader:
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
+            inputs = inputs.to(device)
+            labels = labels.to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
+            init_time = time.time()
             # forward + backward + optimize
             outputs = model(inputs)
             loss = loss_fn(outputs, labels)
@@ -28,10 +33,12 @@ def local_training(model, trainloader, testloader, loss_fn, optimizer, epochs, l
 
             # print statistics
             running_loss += loss.item()
+            running_time += (time.time() - init_time)
             if i % log_frequency == 0:  # print every X mini-batches
                 print(f' step: {i}, loss: {running_loss / log_frequency:.3f}, '
-                      f'accuracy: {100* correct / total:.3f}%')
+                      f'accuracy: {100* correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
                 running_loss = 0.0
+                running_time = 0.0
                 total = 0
                 correct = 0
 
@@ -40,21 +47,25 @@ def local_training(model, trainloader, testloader, loss_fn, optimizer, epochs, l
         test(model, testloader)
 
 
-def federated_training(model, communicator, trainloader, testloader, loss_fn, optimizer, epochs, log_frequency,
+def federated_training(model, communicator, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency,
                        local_steps=3):
     i = 1
     for epoch in range(1, epochs + 1):  # loop over the dataset multiple times
         running_loss = 0.0
         total = 0
         correct = 0
+        running_time = 0.0
         model.train()
         for data in trainloader:
             # get the inputs; data is a list of [inputs, labels]
             inputs, labels = data
+            inputs = inputs.to(device)
+            labels = labels.to(device)
 
             # zero the parameter gradients
             optimizer.zero_grad()
 
+            init_time = time.time()
             # forward + backward + optimize
             outputs = model(inputs)
             loss = loss_fn(outputs, labels)
@@ -68,12 +79,14 @@ def federated_training(model, communicator, trainloader, testloader, loss_fn, op
 
             # print statistics
             running_loss += loss.item()
+            running_time += (time.time() - init_time)
             if i % log_frequency == 0:  # print every X mini-batches
                 print(f' step: {i}, loss: {running_loss / log_frequency:.3f}, '
-                      f'accuracy: {100* correct / total:.3f}%')
+                      f'accuracy: {100 * correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
                 running_loss = 0.0
                 total = 0
                 correct = 0
+                running_time = 0.0
 
             # perform FedAvg/D-SGD every K steps
             if i % local_steps == 0:
