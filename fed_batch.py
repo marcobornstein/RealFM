@@ -53,7 +53,7 @@ if __name__ == '__main__':
     FLC = Communicator(rank, size, comm, device)
 
     # initialize recorder
-    recorder = Recorder(rank, config, dataset)
+    recorder = Recorder(rank, size, config, dataset)
 
     # determine local data contributions
     # create different payoff functions as well (might multiply by a constant out front of the payoff function)
@@ -80,7 +80,7 @@ if __name__ == '__main__':
     FLC.sync_models(model)
 
     # save initial model for federated training
-    model_path = recorder.saveFolderName + 'model.pth'
+    model_path = recorder.saveFolderName + '-model.pth'
     if rank == 0:
         # torch.save(model.state_dict(), 'initial_weights.pth')
         torch.save(model, model_path)
@@ -90,9 +90,13 @@ if __name__ == '__main__':
 
     # run local training (no federated mechanism)
     MPI.COMM_WORLD.Barrier()
-    print('Beginning Local Training...')
+    if rank == 0:
+        print('Beginning Local Training...')
+
     a_local = local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
                              recorder)
+
+    MPI.COMM_WORLD.Barrier()
 
     # reset model to the initial model
     # model = models.resnet18()
@@ -101,9 +105,14 @@ if __name__ == '__main__':
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     model.to(device)
 
-    print('Beginning Federated Training...')
+    MPI.COMM_WORLD.Barrier()
+    if rank == 0:
+        print('Beginning Federated Training...')
+
     a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
                                recorder, local_steps=local_steps)
+
+    MPI.COMM_WORLD.Barrier()
 
     # compute the optimal contributions that would've maximized utility
     b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost)
@@ -111,3 +120,6 @@ if __name__ == '__main__':
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
     recorder.save_data_contributions(b_local, b_fed)
+
+
+# i need to add weighted averaging corresponding to number of data points, shouldn't be too hard

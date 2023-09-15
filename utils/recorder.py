@@ -10,8 +10,9 @@ def date_string(date):
 
 
 class Recorder(object):
-    def __init__(self, rank, config, dataset):
+    def __init__(self, rank, size, config, dataset):
         self.rank = rank
+        self.size = size
 
         # local resultss
         self.record_comp_times = list()
@@ -30,7 +31,7 @@ class Recorder(object):
         # remaining
         self.record_test_acc = list()
         self.update_contribution = list()
-        self.saveFolderName = config['file_path'] + '/' + config['name'] + '-' + dataset
+        self.saveFolderName = config['file_path'] + '/' + config['name'] + '-' + dataset + '-' + str(size) + 'devices'
 
         if rank == 0:
             if not os.path.isdir(self.saveFolderName):
@@ -75,7 +76,7 @@ class Recorder(object):
             self.record_training_acc_f.append(train_acc1)
             self.record_losses_f.append(losses)
 
-    def add_test_accuracy(self, test_acc, epoch=False, local=True):
+    def add_test_accuracy(self, test_acc, epoch=True, local=True):
         if epoch:
             if local:
                 self.epoch_test_acc.append(test_acc)
