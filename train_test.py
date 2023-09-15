@@ -109,7 +109,7 @@ def federated_training(model, communicator, trainloader, testloader, device, los
             else:
                 comm_time = 0
 
-            recorder.add_new(comp_time, comm_time, num_correct / num_examples, loss_val)
+            recorder.add_new(comp_time, comm_time, num_correct / num_examples, loss_val, local=False)
 
             if i % log_frequency == 0:  # print every X mini-batches
                 print(f' [rank {recorder.rank}] step: {i}, loss: {running_loss / log_frequency:.3f}, '
@@ -118,24 +118,24 @@ def federated_training(model, communicator, trainloader, testloader, device, los
                 total = 0
                 correct = 0
                 running_time = 0.0
-                recorder.save_to_file()
+                recorder.save_to_file(local=False)
 
             i += 1
 
         # spit out the final accuracy after training
+        communicator.sync_models(model)
         if epoch == epochs:
             # ensure models are synced so that final test accuracies are all equivalent
-            communicator.sync_models(model)
-            final_accuracy = test(model, testloader, device, recorder, return_acc=True)
+            final_accuracy = test(model, testloader, device, recorder, return_acc=True, local=False)
         else:
-            test(model, testloader, device, recorder)
+            test(model, testloader, device, recorder, local=False)
 
         MPI.COMM_WORLD.Barrier()
 
     return final_accuracy
 
 
-def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_acc=False):
+def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_acc=False, local=True):
     correct = 0
     total = 0
     i = 1
@@ -160,7 +160,7 @@ def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_a
             i += 1
 
     test_acc = correct / total
-    recorder.add_test_accuracy(test_acc, epoch=epoch)
+    recorder.add_test_accuracy(test_acc, epoch=epoch, local=local)
     print(f'[rank {recorder.rank}] test accuracy on {total} images: {100 * test_acc: .3f}%')
     if return_acc:
         return test_acc

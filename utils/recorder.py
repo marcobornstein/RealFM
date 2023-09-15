@@ -12,12 +12,23 @@ def date_string(date):
 class Recorder(object):
     def __init__(self, rank, config, dataset):
         self.rank = rank
+
+        # local resultss
         self.record_comp_times = list()
         self.record_comm_times = list()
         self.record_losses = list()
         self.record_training_acc = list()
-        self.record_test_acc = list()
         self.epoch_test_acc = list()
+
+        # fed results
+        self.record_comp_times_f = list()
+        self.record_comm_times_f = list()
+        self.record_losses_f = list()
+        self.record_training_acc_f = list()
+        self.epoch_test_acc_f = list()
+
+        # remaining
+        self.record_test_acc = list()
         self.update_contribution = list()
         self.saveFolderName = config['file_path'] + '/' + config['name'] + '-' + dataset
 
@@ -52,25 +63,52 @@ class Recorder(object):
     def get_save_folder(self):
         return self.saveFolderName
 
-    def add_new(self, comp_time, comm_time, train_acc1, losses):
-        self.record_comp_times.append(comp_time)
-        self.record_comm_times.append(comm_time)
-        self.record_training_acc.append(train_acc1)
-        self.record_losses.append(losses)
+    def add_new(self, comp_time, comm_time, train_acc1, losses, local=True):
+        if local:
+            self.record_comp_times.append(comp_time)
+            self.record_comm_times.append(comm_time)
+            self.record_training_acc.append(train_acc1)
+            self.record_losses.append(losses)
+        else:
+            self.record_comp_times_f.append(comp_time)
+            self.record_comm_times_f.append(comm_time)
+            self.record_training_acc_f.append(train_acc1)
+            self.record_losses_f.append(losses)
 
-    def add_test_accuracy(self, test_acc, epoch=False):
+    def add_test_accuracy(self, test_acc, epoch=False, local=True):
         if epoch:
-            self.epoch_test_acc.append(test_acc)
-            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-epoch-acc-top1.log', self.epoch_test_acc, delimiter=',')
+            if local:
+                self.epoch_test_acc.append(test_acc)
+                np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-local-epoch-acc-top1.log',
+                           self.epoch_test_acc, delimiter=',')
+            else:
+                self.epoch_test_acc_f.append(test_acc)
+                np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-fed-epoch-acc-top1.log',
+                           self.epoch_test_acc_f, delimiter=',')
         else:
             self.record_test_acc.append(test_acc)
-            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-test-acc-top1.log', self.record_test_acc, delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-test-acc-top1.log', self.record_test_acc,
+                       delimiter=',')
 
-    def save_to_file(self):
-        np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-comp-time.log', self.record_comp_times, delimiter=',')
-        np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-comm-time.log', self.record_comm_times, delimiter=',')
-        np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-train-loss.log', self.record_losses, delimiter=',')
-        np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-train-acc-top1.log', self.record_training_acc, delimiter=',')
+    def save_to_file(self, local=True):
+        if local:
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-local-comp-time.log',
+                       self.record_comp_times, delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-local-comm-time.log',
+                       self.record_comm_times, delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-local-train-loss.log',
+                       self.record_losses, delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-local-train-acc-top1.log',
+                       self.record_training_acc, delimiter=',')
+        else:
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-fed-comp-time.log', self.record_comp_times_f,
+                       delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-fed-comm-time.log', self.record_comm_times_f,
+                       delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-fed-train-loss.log', self.record_losses_f,
+                       delimiter=',')
+            np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-fed-train-acc-top1.log',
+                       self.record_training_acc_f, delimiter=',')
 
     def save_data_contributions(self, b_local, b_fed):
         self.update_contribution.append(b_local)
