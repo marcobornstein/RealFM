@@ -30,8 +30,8 @@ if __name__ == '__main__':
     local_steps = config['local_steps']
 
     # set seed for reproducibility
-    # torch.manual_seed(seed)
-    # np.random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
     # initialize MPI
     comm = MPI.COMM_WORLD

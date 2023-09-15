@@ -1,1 +1,1 @@
-{'train_bs': 128, 'test_bs': 128, 'lr': 0.001, 'marginal_cost': 0.00415, 'local_steps': 6, 'random_seed': 1996, 'test_frequency': 500, 'log_frequency': 30, 'test_batches': 30, 'epochs': 100, 'file_path': 'output', 'name': 'realfm-uniform-run1'}
+{'train_bs': 128, 'test_bs': 128, 'lr': 0.001, 'marginal_cost': 0.00415, 'local_steps': 6, 'random_seed': 1996, 'test_frequency': 500, 'log_frequency': 30, 'test_batches': 30, 'epochs': 100, 'file_path': 'output', 'name': 'realfm-uniform-run1-2'}

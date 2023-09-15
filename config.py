@@ -3,7 +3,7 @@ configs = {
         'train_bs': 128,
         'test_bs': 128,
         'lr': 1e-3,
-        'marginal_cost': 4.15e-3,
+        'marginal_cost': 5.62e-3,
         'local_steps': 6,
         'random_seed': 101,
         'test_frequency': 500,
@@ -16,7 +16,8 @@ configs = {
 }
 
 # Best ablation was
-# train_bs = 128, local_steps = 6
+# train_bs = 128, local_steps = 6, mc = 4.15e-3 (8 devices)
+# train_bs = 128, local_steps = 6, mc = 5.62e-3 (16 devices)
 
 # random seeds
 # Run 1: 1996
