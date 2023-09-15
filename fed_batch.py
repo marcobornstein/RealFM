@@ -62,7 +62,7 @@ if __name__ == '__main__':
     # marginal_cost = 1e-3
     b_local = optimal_data_local(marginal_cost)
 
-    print('rank: %d, optimal data: %d' % (rank, b_local))
+    print('rank: %d, local optimal data: %d' % (rank, b_local))
 
     # in order to partition data without overlap, share the amount of data each device will use
     device_num_data = np.empty(size, dtype=np.int32)
@@ -97,6 +97,7 @@ if __name__ == '__main__':
     # model = models.resnet18()
     # model.load_state_dict(torch.load('initial_weights.pth'))
     model = torch.load('model.pth')
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     model.to(device)
 
     a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
