@@ -4,7 +4,7 @@ import torchvision
 import torchvision.transforms as transforms
 
 
-def load_cifar10(num_data, rank, size, batch_size):
+def load_cifar10(num_data, rank, train_batch_size, test_batch_size):
 
     # get CIFAR10 dataset
     transform = transforms.Compose(
@@ -25,6 +25,12 @@ def load_cifar10(num_data, rank, size, batch_size):
 
     # divvy up data according to amount of data each device needs
     num_data_cum_sum = np.cumsum(num_data)
+
+    if num_data_cum_sum[-1] > 50000:
+        if rank == 0:
+            print('ERROR: Not Enough CIFAR10 Data for Given Marginal Costs')
+            exit()
+
     if rank == 0:
         s_idx = 0
     else:
@@ -40,7 +46,7 @@ def load_cifar10(num_data, rank, size, batch_size):
     trainset.data = trainset.data[device_data_idx, :, :, :]
 
     # load train and test data
-    trainloader = torch.utils.data.DataLoader(trainset, batch_size=batch_size, shuffle=True)
-    testloader = torch.utils.data.DataLoader(testset, batch_size=batch_size, shuffle=False)
+    trainloader = torch.utils.data.DataLoader(trainset, batch_size=train_batch_size, shuffle=True)
+    testloader = torch.utils.data.DataLoader(testset, batch_size=test_batch_size, shuffle=False)
 
     return trainloader, testloader

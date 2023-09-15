@@ -1,27 +1,37 @@
 import torch
 from utils.federated_communication import Communicator
-from utils.custom_models import CNN
 from utils.data_loading import load_cifar10
-from utils.equilibrium import optimal_data_local
+from utils.equilibrium import optimal_data_local, optimal_data_fed
 from train_test import local_training, federated_training
 from mpi4py import MPI
 import numpy as np
 import torchvision.models as models
+from config import configs
+from utils.recorder import Recorder
 
 # split data up amongst 16 devices, then show how well a centralized model performs using 1-16
 # averaged batches per update
 
 
 if __name__ == '__main__':
-    seed = 101
-    batch_size = 64
-    learning_rate = 1e-3
-    epochs = 100
-    log_frequency = 10
+
+    # determine config
+    dataset = 'cifar10'
+    config = configs[dataset]
+
+    # determine hyper-parameters
+    seed = config['random_seed']
+    train_batch_size = config['train_bs']
+    test_batch_size = config['test_bs']
+    learning_rate = config['lr']
+    epochs = config['epochs']
+    log_frequency = config['log_frequency']
+    marginal_cost = config['marginal_cost']
+    local_steps = config['local_steps']
 
     # set seed for reproducibility
-    # torch.manual_seed(seed)
-    # np.random.seed(seed)
+    torch.manual_seed(seed)
+    np.random.seed(seed)
 
     # initialize MPI
     comm = MPI.COMM_WORLD
@@ -42,24 +52,25 @@ if __name__ == '__main__':
     # initialize federated communicator
     FLC = Communicator(rank, size, comm, device)
 
+    # initialize recorder
+    recorder = Recorder(rank, size, config, dataset)
+
     # determine local data contributions
     # create different payoff functions as well (might multiply by a constant out front of the payoff function)
     # marginal_cost = np.random.uniform(9e-3, 0.0099)
-    marginal_cost = 5e-3
+    # marginal_cost = 5e-3
     # marginal_cost = 1e-3
-    optimal_updates_local = optimal_data_local(marginal_cost)
+    b_local = optimal_data_local(marginal_cost)
 
-    print('rank: %d, optimal data: %d' % (rank, optimal_updates_local))
+    print('rank: %d, local optimal data: %d' % (rank, b_local))
 
     # in order to partition data without overlap, share the amount of data each device will use
     device_num_data = np.empty(size, dtype=np.int32)
-    comm.Allgather(np.array([optimal_updates_local], dtype=np.int32), device_num_data)
+    comm.Allgather(np.array([b_local], dtype=np.int32), device_num_data)
 
     # load CIFAR10 data
-    trainloader, testloader = load_cifar10(device_num_data, rank, size, batch_size)
+    trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
 
-    # use tiny CNN
-    # model = CNN()
     # use ResNet18
     model = models.resnet18()
     criterion = torch.nn.CrossEntropyLoss()
@@ -68,10 +79,47 @@ if __name__ == '__main__':
     # synchronize models (so they are identical initially)
     FLC.sync_models(model)
 
+    # save initial model for federated training
+    model_path = recorder.saveFolderName + '-model.pth'
+    if rank == 0:
+        # torch.save(model.state_dict(), 'initial_weights.pth')
+        torch.save(model, model_path)
+
+    # load model onto GPU (if available)
+    model.to(device)
+
     # run local training (no federated mechanism)
-    print('Beginning Training...')
-    # local_training(model, trainloader, testloader, criterion, optimizer, epochs, log_frequency)
-    federated_training(model, FLC, trainloader, testloader, criterion, optimizer, epochs, log_frequency)
+    MPI.COMM_WORLD.Barrier()
+    if rank == 0:
+        print('Beginning Local Training...')
 
-    print('Finished Training')
+    a_local = local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
+                             recorder)
 
+    MPI.COMM_WORLD.Barrier()
+
+    # reset model to the initial model
+    # model = models.resnet18()
+    # model.load_state_dict(torch.load('initial_weights.pth'))
+    model = torch.load(model_path)
+    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+    model.to(device)
+
+    MPI.COMM_WORLD.Barrier()
+    if rank == 0:
+        print('Beginning Federated Training...')
+
+    a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
+                               recorder, local_steps=local_steps)
+
+    MPI.COMM_WORLD.Barrier()
+
+    # compute the optimal contributions that would've maximized utility
+    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost)
+
+    # print and store optimal amount of data
+    print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
+    recorder.save_data_contributions(b_local, b_fed)
+
+
+# i need to add weighted averaging corresponding to number of data points, shouldn't be too hard
