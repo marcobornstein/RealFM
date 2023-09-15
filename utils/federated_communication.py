@@ -56,6 +56,7 @@ class Communicator:
         self.tensor_list = list()
         self.send_buffer = None
         self.recv_buffer = None
+        self.self_weight = None
 
     def average(self, state_dict):
 
@@ -75,8 +76,9 @@ class Communicator:
                 for key in state_dict.keys():
                     state_dict[key] += neighbor_sd[key]
 
-        for key in state_dict.keys():
-            state_dict[key] = torch.div(state_dict[key], self.size)
+        # when using self weight, leave commented
+        # for key in state_dict.keys():
+        #     state_dict[key] = torch.div(state_dict[key], self.size)
 
         return state_dict, toc - tic
 
@@ -86,6 +88,8 @@ class Communicator:
         state_dict = self.prepare(model)
 
         # average models together
+        for key in state_dict:
+            state_dict[key] = state_dict[key] * self.self_weight
         state_dict, _ = self.average(state_dict)
 
         # reset local models to be the averaged model
@@ -102,7 +106,9 @@ class Communicator:
         # prepare model to be communicated
         state_dict = self.prepare(model)
 
-        # averaging across all devices
+        # averaging across all device
+        for key in state_dict:
+            state_dict[key] = state_dict[key] * self.self_weight
         state_dict, comm_time = self.average(state_dict)
 
         # reset local models to be the averaged model

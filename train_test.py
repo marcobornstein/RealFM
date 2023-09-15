@@ -135,6 +135,75 @@ def federated_training(model, communicator, trainloader, testloader, device, los
     return final_accuracy
 
 
+def federated_training_nonuniform(model, communicator, trainloader, testloader, device, loss_fn, optimizer, steps_per_e,
+                                  epochs, log_frequency, recorder, local_steps=6):
+    i = 1
+    total_steps = steps_per_e * epochs
+    while i < total_steps + 2:
+        running_loss = 0.0
+        total = 0
+        correct = 0
+        running_time = 0.0
+        model.train()
+        for data in trainloader:
+            # get the inputs; data is a list of [inputs, labels]
+            inputs, labels = data
+            inputs = inputs.to(device)
+            labels = labels.to(device)
+
+            # zero the parameter gradients
+            optimizer.zero_grad()
+
+            init_time = time.time()
+            # forward + backward + optimize
+            outputs = model(inputs)
+            loss = loss_fn(outputs, labels)
+            loss.backward()
+            optimizer.step()
+
+            # compute running accuracy
+            _, predicted = torch.max(outputs.data, 1)
+            num_examples = labels.size(0)
+            num_correct = (predicted == labels).sum().item()
+            total += num_examples
+            correct += num_correct
+
+            # print statistics
+            loss_val = loss.item()
+            running_loss += loss_val
+            comp_time = time.time() - init_time
+            running_time += comp_time
+
+            # perform FedAvg/D-SGD every K steps
+            if i % local_steps == 0:
+                comm_time = communicator.communicate(model)
+            else:
+                comm_time = 0
+
+            recorder.add_new(comp_time, comm_time, num_correct / num_examples, loss_val, local=False)
+
+            if i % log_frequency == 0:  # print every X mini-batches
+                print(f' [rank {recorder.rank}] step: {i}, loss: {running_loss / log_frequency:.3f}, '
+                      f'accuracy: {100 * correct / total:.3f}%, time: {running_time / log_frequency:.3f}')
+                running_loss = 0.0
+                total = 0
+                correct = 0
+                running_time = 0.0
+                recorder.save_to_file(local=False)
+
+            if i % steps_per_e == 0:
+                communicator.sync_models(model)
+                test(model, testloader, device, recorder, local=False)
+
+            i += 1
+
+    # spit out the final accuracy after training
+    communicator.sync_models(model)
+    final_accuracy = test(model, testloader, device, recorder, return_acc=True, local=False)
+    MPI.COMM_WORLD.Barrier()
+    return final_accuracy
+
+
 def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_acc=False, local=True):
     correct = 0
     total = 0

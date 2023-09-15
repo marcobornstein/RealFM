@@ -3,21 +3,24 @@ configs = {
         'train_bs': 128,
         'test_bs': 128,
         'lr': 1e-3,
-        'marginal_cost': 5.62e-3,
+        'marginal_cost': 9e-3,
         'local_steps': 6,
-        'random_seed': 101,
+        'random_seed': 1996,
         'test_frequency': 500,
         'log_frequency': 30,
         'test_batches': 30,
         'epochs': 100,
         'file_path': 'output',
-        'name': 'realfm-best-run1'
+        'uniform_payoff': False,
+        'name': 'test'  # 'realfm-best-run1'
     }
 }
 
 # Best ablation was
-# train_bs = 128, local_steps = 6, mc = 4.15e-3 (8 devices)
-# train_bs = 128, local_steps = 6, mc = 5.62e-3 (16 devices)
+# train_bs = 128, local_steps = 6, mc = 4.15e-3 (8 devices) UNIFORM
+# train_bs = 128, local_steps = 6, mc = 5.62e-3 (16 devices) UNIFORM
+
+# train_bs = 128, local_steps = 6, mc = 9e-3 (16 devices) NON-UNIFORM
 
 # random seeds
 # Run 1: 1996

@@ -2,7 +2,7 @@ import torch
 from utils.federated_communication import Communicator
 from utils.data_loading import load_cifar10
 from utils.equilibrium import optimal_data_local, optimal_data_fed
-from train_test import local_training, federated_training
+from train_test import local_training, federated_training, federated_training_nonuniform
 from mpi4py import MPI
 import numpy as np
 import torchvision.models as models
@@ -28,15 +28,16 @@ if __name__ == '__main__':
     log_frequency = config['log_frequency']
     marginal_cost = config['marginal_cost']
     local_steps = config['local_steps']
-
-    # set seed for reproducibility
-    torch.manual_seed(seed)
-    np.random.seed(seed)
+    uniform_payoff = config['uniform_payoff']
 
     # initialize MPI
     comm = MPI.COMM_WORLD
     rank = comm.Get_rank()
     size = comm.Get_size()
+
+    # set seed for reproducibility
+    torch.manual_seed(seed+rank)
+    np.random.seed(seed+rank)
 
     # determine torch device available (default to GPU if available)
     if torch.cuda.is_available():
@@ -55,18 +56,29 @@ if __name__ == '__main__':
     # initialize recorder
     recorder = Recorder(rank, size, config, dataset)
 
+    if uniform_payoff:
+        c = 1
+    else:
+        c = np.random.uniform(1, 2)
+    # keep note of the constant used
+    recorder.save_payoff_c(c)
+
     # determine local data contributions
     # create different payoff functions as well (might multiply by a constant out front of the payoff function)
     # marginal_cost = np.random.uniform(9e-3, 0.0099)
     # marginal_cost = 5e-3
     # marginal_cost = 1e-3
-    b_local = optimal_data_local(marginal_cost)
+    b_local = optimal_data_local(marginal_cost, c=c)
 
-    print('rank: %d, local optimal data: %d' % (rank, b_local))
+    print('rank: %d, local optimal data: %d, payoff constant %f' % (rank, b_local, c))
 
     # in order to partition data without overlap, share the amount of data each device will use
     device_num_data = np.empty(size, dtype=np.int32)
     comm.Allgather(np.array([b_local], dtype=np.int32), device_num_data)
+
+    # determine self weight
+    self_weight = b_local / np.sum(device_num_data)
+    FLC.self_weight = self_weight
 
     # load CIFAR10 data
     trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
@@ -109,13 +121,19 @@ if __name__ == '__main__':
     if rank == 0:
         print('Beginning Federated Training...')
 
-    a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
-                               recorder, local_steps=local_steps)
+    if uniform_payoff:
+        a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs,
+                                   log_frequency, recorder, local_steps=local_steps)
+    else:
+        b_local_uniform = optimal_data_local(marginal_cost, c=1)
+        steps_per_epoch = (b_local_uniform // train_batch_size) + 1
+        a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
+                                              steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
 
     MPI.COMM_WORLD.Barrier()
 
     # compute the optimal contributions that would've maximized utility
-    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost)
+    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c)
 
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
