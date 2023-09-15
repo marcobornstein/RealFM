@@ -1,7 +1,7 @@
 import torch
 from utils.federated_communication import Communicator
 from utils.data_loading import load_cifar10
-from utils.equilibrium import optimal_data_local
+from utils.equilibrium import optimal_data_local, optimal_data_fed
 from train_test import local_training, federated_training
 from mpi4py import MPI
 import numpy as np
@@ -60,13 +60,13 @@ if __name__ == '__main__':
     # marginal_cost = np.random.uniform(9e-3, 0.0099)
     # marginal_cost = 5e-3
     # marginal_cost = 1e-3
-    optimal_updates_local = optimal_data_local(marginal_cost)
+    b_local = optimal_data_local(marginal_cost)
 
-    print('rank: %d, optimal data: %d' % (rank, optimal_updates_local))
+    print('rank: %d, optimal data: %d' % (rank, b_local))
 
     # in order to partition data without overlap, share the amount of data each device will use
     device_num_data = np.empty(size, dtype=np.int32)
-    comm.Allgather(np.array([optimal_updates_local], dtype=np.int32), device_num_data)
+    comm.Allgather(np.array([b_local], dtype=np.int32), device_num_data)
 
     # load CIFAR10 data
     trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
@@ -79,14 +79,27 @@ if __name__ == '__main__':
     # synchronize models (so they are identical initially)
     FLC.sync_models(model)
 
+    # save initial model for federated training
+    torch.save(model.state_dict(), 'initial_weights.pth')
+
     # load model onto GPU (if available)
     model.to(device)
 
     # run local training (no federated mechanism)
     print('Beginning Training...')
-    # local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency, recorder)
-    federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
-                       recorder, local_steps=local_steps)
+    a_local = local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
+                             recorder)
 
-    print('Finished Training')
+    # reset model to the initial model
+    model = models.resnet18()
+    model.load_state_dict(torch.load('initial_weights.pth'))
 
+    a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
+                               recorder, local_steps=local_steps)
+
+    # compute the optimal contributions that would've maximized utility
+    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost)
+
+    # print and store optimal amount of data
+    print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
+    recorder.save_data_contributions(b_local, b_fed)

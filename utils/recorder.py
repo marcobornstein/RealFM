@@ -18,6 +18,7 @@ class Recorder(object):
         self.record_training_acc = list()
         self.record_test_acc = list()
         self.epoch_test_acc = list()
+        self.update_contribution = list()
         self.saveFolderName = config['file_path'] + '/' + config['name'] + '-' + dataset
 
         if rank == 0:
@@ -70,3 +71,9 @@ class Recorder(object):
         np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-comm-time.log', self.record_comm_times, delimiter=',')
         np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-train-loss.log', self.record_losses, delimiter=',')
         np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-train-acc-top1.log', self.record_training_acc, delimiter=',')
+
+    def save_data_contributions(self, b_local, b_fed):
+        self.update_contribution.append(b_local)
+        self.update_contribution.append(b_fed)
+        np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-update-contribution.log', self.update_contribution,
+                   delimiter=',')
