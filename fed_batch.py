@@ -80,19 +80,24 @@ if __name__ == '__main__':
     FLC.sync_models(model)
 
     # save initial model for federated training
-    torch.save(model.state_dict(), 'initial_weights.pth')
+    if rank == 0:
+        # torch.save(model.state_dict(), 'initial_weights.pth')
+        torch.save(model, 'model.pth')
 
     # load model onto GPU (if available)
     model.to(device)
 
     # run local training (no federated mechanism)
+    MPI.COMM_WORLD.Barrier()
     print('Beginning Training...')
     a_local = local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
                              recorder)
 
     # reset model to the initial model
-    model = models.resnet18()
-    model.load_state_dict(torch.load('initial_weights.pth'))
+    # model = models.resnet18()
+    # model.load_state_dict(torch.load('initial_weights.pth'))
+    model = torch.load('model.pth')
+    model.to(device)
 
     a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
                                recorder, local_steps=local_steps)
