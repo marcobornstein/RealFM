@@ -8,6 +8,7 @@ import numpy as np
 import torchvision.models as models
 from config import configs
 from utils.recorder import Recorder
+import copy
 
 # split data up amongst 16 devices, then show how well a centralized model performs using 1-16
 # averaged batches per update
@@ -29,6 +30,8 @@ if __name__ == '__main__':
     marginal_cost = config['marginal_cost']
     local_steps = config['local_steps']
     uniform_payoff = config['uniform_payoff']
+    uniform_cost = config['uniform_cost']
+    og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
     comm = MPI.COMM_WORLD
@@ -63,6 +66,17 @@ if __name__ == '__main__':
         high = 2
         avg = (high+low)/2
         c = np.random.uniform(low, high)
+
+    if uniform_cost:
+        marginal_cost = marginal_cost
+    else:
+        marginal_cost = np.random.normal(marginal_cost, 0.3*marginal_cost)
+
+    if uniform_payoff and uniform_cost:
+        nu = False
+    else:
+        nu = True
+
     # keep note of the constant used
     recorder.save_payoff_c(c)
 
@@ -73,7 +87,7 @@ if __name__ == '__main__':
     # marginal_cost = 1e-3
     b_local = optimal_data_local(marginal_cost, c=c)
 
-    print('rank: %d, local optimal data: %d, payoff constant %f' % (rank, b_local, c))
+    print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
 
     # in order to partition data without overlap, share the amount of data each device will use
     device_num_data = np.empty(size, dtype=np.int32)
@@ -124,11 +138,11 @@ if __name__ == '__main__':
     if rank == 0:
         print('Beginning Federated Training...')
 
-    if uniform_payoff:
+    if not nu:
         a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs,
                                    log_frequency, recorder, local_steps=local_steps)
     else:
-        b_local_uniform = optimal_data_local(marginal_cost, c=avg)
+        b_local_uniform = optimal_data_local(og_marginal_cost, c=avg)
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
                                               steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)

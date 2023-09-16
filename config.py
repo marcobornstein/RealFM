@@ -12,6 +12,7 @@ configs = {
         'epochs': 100,
         'file_path': 'output',
         'uniform_payoff': False,
+        'uniform_cost': False,
         'name': 'realfm-nonuniformP-run1'
     }
 }
@@ -21,7 +22,7 @@ configs = {
 # train_bs = 128, local_steps = 6, mc = 5.62e-3 (16 devices) UNIFORM
 
 # train_bs = 128, local_steps = 6, mc = 9e-3 (16 devices) NON-UNIFORM
-# train_bs = 128, local_steps = 6, mc = 7e-3 (16 devices) NON-UNIFORM
+# train_bs = 128, local_steps = 6, mc = 7e-3 (8 devices) NON-UNIFORM
 
 # random seeds
 # Run 1: 1996
