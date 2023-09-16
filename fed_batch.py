@@ -59,7 +59,10 @@ if __name__ == '__main__':
     if uniform_payoff:
         c = 1
     else:
-        c = np.random.uniform(1, 2)
+        low = 1
+        high = 2
+        avg = (high+low)/2
+        c = np.random.uniform(low, high)
     # keep note of the constant used
     recorder.save_payoff_c(c)
 
@@ -125,7 +128,7 @@ if __name__ == '__main__':
         a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs,
                                    log_frequency, recorder, local_steps=local_steps)
     else:
-        b_local_uniform = optimal_data_local(marginal_cost, c=1)
+        b_local_uniform = optimal_data_local(marginal_cost, c=avg)
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
                                               steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
@@ -138,6 +141,3 @@ if __name__ == '__main__':
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
     recorder.save_data_contributions(b_local, b_fed)
-
-
-# i need to add weighted averaging corresponding to number of data points, shouldn't be too hard
