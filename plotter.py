@@ -51,13 +51,14 @@ def plot_ci(x, y, num_runs, num_dots, mylegend, ls='-', lw=3, transparency=0.2):
 
 if __name__ == '__main__':
     colors = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    nw = 16
+    nw = 8
     epochs = 100
     fed_accs = []
     local_accs = []
     iters = np.arange(1, epochs + 1)
     each_dev_local_a = []
 
+    '''
     for trial in range(1, 4):
         file = 'output/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
         fed_test_acc = unpack_data(file, epochs, nw)
@@ -92,26 +93,61 @@ if __name__ == '__main__':
     plt.xscale("log")
     # plt.ylim([0.225, 0.48])
     plt.grid(which="both", alpha=0.25)
-    # plt.show()
+    plt.show()
     savefilename = str(nw) + 'device' + '.png'
-    plt.savefig(savefilename, dpi=200)
+    # plt.savefig(savefilename, dpi=200)
+    '''
 
     # =======================================================
     # plot data contribution plot and bar chart
 
-    fed_a = y_mean[-1] * np.ones(nw)
-    local_b = np.empty((3, nw))
-    fed_b = np.empty((3, nw))
+    # fed_a = y_mean[-1] * np.ones(nw)
+    local_b = np.ones((3, nw)) * np.nan
+    fed_b = np.ones((3, nw)) * np.nan
+    payoff_b = np.ones((3, nw)) * np.nan
+    uniform = False
+
     for trial in range(1, 4):
 
-        file = 'output/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-        optimal_data = unpack_data(file, 2, nw, datatype='update-contribution.log')
-        local_b[trial-1, :] = optimal_data[0, :]
-        fed_b[trial-1, :] = optimal_data[1, :]
+        if uniform:
+            file = 'output/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+            optimal_data = unpack_data(file, 2, nw, datatype='update-contribution.log')
+            local_b[trial - 1, :] = optimal_data[0, :]
+            fed_b[trial - 1, :] = optimal_data[1, :]
 
-    local_a = np.mean(np.stack(each_dev_local_a, axis=0), axis=0)
-    local_b = np.mean(local_b, axis=0)
-    fed_b = np.mean(fed_b, axis=0)
+        else:
+            file = 'output/non-uniform/realfm-nonuniformP-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+            optimal_data = unpack_data(file, 3, nw, datatype='update-contribution.log')
+            payoff_b[trial-1, :] = optimal_data[0, :]
+            local_b[trial-1, :] = optimal_data[1, :]
+            fed_b[trial-1, :] = optimal_data[2, :]
+
+    # local_a = np.mean(np.stack(each_dev_local_a, axis=0), axis=0)
+    local_b = np.nanmean(local_b, axis=0)
+    fed_b = np.nanmean(fed_b, axis=0)
+
+    # bar plot
+    # '''
+    added_b = fed_b - local_b
+    devices = np.arange(1, nw+1)
+    plt.figure()
+    plt.bar(devices, local_b, label='Local Optimal Contributions $(b_i^o)$')
+    bar = plt.bar(devices, added_b, bottom=local_b, label='Incentivized Contributions $(b_i^* - b_i^o)$')
+    plt.xlabel('Devices', fontsize=13)
+    plt.ylabel('Update Contribution ($b_i$)', fontsize=13)
+    plt.xticks(devices)
+    plt.legend(loc='lower left', fontsize=10)
+    # plt.ylim([0, 5500])
+
+    for i, rect in enumerate(bar):
+        val = 100*(added_b[i] / local_b[i])
+        height = rect.get_height() + local_b[i]
+        plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'+{val:.0f}%', ha='center', va='bottom', fontsize=7)
+
+    savefilename2 = str(nw) + 'device-bar-mean' + '.png'
+    # plt.savefig(savefilename2, dpi=200)
+    plt.show()
+    # '''
 
     # scatter plot
     '''
@@ -129,20 +165,3 @@ if __name__ == '__main__':
     # plt.xscale("symlog")
     plt.show()
     '''
-
-    # bar plot
-    # '''
-    added_b = fed_b - local_b
-    devices = np.arange(1, nw+1)
-    plt.figure()
-    plt.bar(devices, local_b, label='Local Optimal Contributions $(b_i^o)$')
-    plt.bar(devices, added_b, bottom=local_b, label='Incentivized Contributions $(b_i^* - b_i^o)$')
-    plt.xlabel('Devices', fontsize=13)
-    plt.ylabel('Update Contribution ($b_i$)', fontsize=13)
-    plt.xticks(devices)
-    plt.legend(loc='lower left', fontsize=10)
-    # plt.ylim([0, 5500])
-    savefilename2 = str(nw) + 'device-bar' + '.png'
-    plt.savefig(savefilename2, dpi=200)
-    # plt.show()
-    # '''

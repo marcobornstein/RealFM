@@ -116,3 +116,8 @@ class Recorder(object):
         self.update_contribution.append(b_fed)
         np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-update-contribution.log', self.update_contribution,
                    delimiter=',')
+
+    def save_payoff_c(self, c):
+        self.update_contribution.append(c)
+        np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-update-contribution.log', self.update_contribution,
+                   delimiter=',')
