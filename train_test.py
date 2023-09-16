@@ -139,7 +139,7 @@ def federated_training_nonuniform(model, communicator, trainloader, testloader, 
                                   epochs, log_frequency, recorder, local_steps=6):
     i = 1
     total_steps = steps_per_e * epochs
-    while i < total_steps + 2:
+    while True:
         running_loss = 0.0
         total = 0
         correct = 0
@@ -193,15 +193,14 @@ def federated_training_nonuniform(model, communicator, trainloader, testloader, 
 
             if i % steps_per_e == 0:
                 communicator.sync_models(model)
-                test(model, testloader, device, recorder, local=False)
+                if i % total_steps == 0:
+                    # spit out the final accuracy after training
+                    final_accuracy = test(model, testloader, device, recorder, return_acc=True, local=False)
+                    return final_accuracy
+                else:
+                    test(model, testloader, device, recorder, local=False)
 
             i += 1
-
-    # spit out the final accuracy after training
-    communicator.sync_models(model)
-    final_accuracy = test(model, testloader, device, recorder, return_acc=True, local=False)
-    MPI.COMM_WORLD.Barrier()
-    return final_accuracy
 
 
 def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_acc=False, local=True):
