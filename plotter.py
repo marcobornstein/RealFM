@@ -102,10 +102,10 @@ if __name__ == '__main__':
     # plot data contribution plot and bar chart
 
     # fed_a = y_mean[-1] * np.ones(nw)
-    local_b = np.empty((3, nw))
-    fed_b = np.empty((3, nw))
-    payoff_b = np.empty((3, nw))
-    uniform = True
+    local_b = np.ones((3, nw)) * np.nan
+    fed_b = np.ones((3, nw)) * np.nan
+    payoff_b = np.ones((3, nw)) * np.nan
+    uniform = False
 
     for trial in range(1, 4):
 
@@ -123,8 +123,8 @@ if __name__ == '__main__':
             fed_b[trial-1, :] = optimal_data[2, :]
 
     # local_a = np.mean(np.stack(each_dev_local_a, axis=0), axis=0)
-    local_b = np.mean(local_b, axis=0)
-    fed_b = np.mean(fed_b, axis=0)
+    local_b = np.nanmean(local_b, axis=0)
+    fed_b = np.nanmean(fed_b, axis=0)
 
     # bar plot
     # '''
@@ -144,9 +144,9 @@ if __name__ == '__main__':
         height = rect.get_height() + local_b[i]
         plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'+{val:.0f}%', ha='center', va='bottom', fontsize=7)
 
-    savefilename2 = str(nw) + 'device-bar' + '.png'
-    plt.savefig(savefilename2, dpi=200)
-    # plt.show()
+    savefilename2 = str(nw) + 'device-bar-mean' + '.png'
+    # plt.savefig(savefilename2, dpi=200)
+    plt.show()
     # '''
 
     # scatter plot

@@ -70,7 +70,7 @@ if __name__ == '__main__':
     if uniform_cost:
         marginal_cost = marginal_cost
     else:
-        marginal_cost = np.random.normal(marginal_cost, 0.3*marginal_cost)
+        marginal_cost = np.random.normal(marginal_cost, 0.1*marginal_cost)
 
     if uniform_payoff and uniform_cost:
         nu = False
