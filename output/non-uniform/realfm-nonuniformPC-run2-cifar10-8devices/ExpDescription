@@ -1,0 +1,1 @@
+{'train_bs': 128, 'test_bs': 128, 'lr': 0.001, 'marginal_cost': 0.007, 'local_steps': 6, 'random_seed': 2015, 'test_frequency': 500, 'log_frequency': 30, 'test_batches': 30, 'epochs': 100, 'file_path': 'output', 'uniform_payoff': False, 'uniform_cost': False, 'name': 'realfm-nonuniformPC-run2'}
