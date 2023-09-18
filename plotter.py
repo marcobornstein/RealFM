@@ -51,7 +51,7 @@ def plot_ci(x, y, num_runs, num_dots, mylegend, ls='-', lw=3, transparency=0.2):
 
 if __name__ == '__main__':
     colors = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    nw = 8
+    nw = 16
     epochs = 100
     fed_accs = []
     local_accs = []
@@ -110,13 +110,14 @@ if __name__ == '__main__':
     for trial in range(1, 4):
 
         if uniform:
-            file = 'output/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+            file = 'output/Cifar10/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
             optimal_data = unpack_data(file, 2, nw, datatype='update-contribution.log')
             local_b[trial - 1, :] = optimal_data[0, :]
             fed_b[trial - 1, :] = optimal_data[1, :]
 
         else:
-            file = 'output/non-uniform/realfm-nonuniformP-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+            # file = 'output/Cifar10/non-uniform/realfm-nonuniformP-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+            file = 'output/Cifar10/non-uniform/realfm-nonuniformPC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
             optimal_data = unpack_data(file, 3, nw, datatype='update-contribution.log')
             payoff_b[trial-1, :] = optimal_data[0, :]
             local_b[trial-1, :] = optimal_data[1, :]
@@ -145,8 +146,8 @@ if __name__ == '__main__':
         plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'+{val:.0f}%', ha='center', va='bottom', fontsize=7)
 
     savefilename2 = str(nw) + 'device-bar-mean' + '.png'
-    # plt.savefig(savefilename2, dpi=200)
-    plt.show()
+    plt.savefig(savefilename2, dpi=200)
+    # plt.show()
     # '''
 
     # scatter plot

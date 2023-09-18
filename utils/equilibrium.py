@@ -48,14 +48,14 @@ def accuracy_shaping_max(b, b_local, a_bar, a_fed, mc, c):
     return acc_diff
 
 
-def optimal_data_local(cost, b=2, k=1, linear=False, c=1):
+def optimal_data_local(cost, b=2, k=1, linear=False, c=1, a_opt=0.95):
     x_init = np.array(1e4)
     if not linear:
-        sol = scipy.optimize.fmin(inverse_utility, x_init, args=(cost, k, b, c))[0]
-        util = utility(sol, cost, k, b, c)
+        sol = scipy.optimize.fmin(inverse_utility, x_init, args=(cost, k, b, c, a_opt))[0]
+        util = utility(sol, cost, k, b, c, a_opt=a_opt)
     else:
-        sol = scipy.optimize.fmin(inverse_old_utility, x_init, args=(cost, k))[0]
-        util = old_utility(sol, cost, k)
+        sol = scipy.optimize.fmin(inverse_old_utility, x_init, args=(cost, k, a_opt))[0]
+        util = old_utility(sol, cost, k, a_opt=a_opt)
 
     if util <= 0:
         num_data = 0

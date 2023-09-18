@@ -1,6 +1,6 @@
 import torch
 from utils.federated_communication import Communicator
-from utils.data_loading import load_cifar10
+from utils.data_loading import load_cifar10, load_mnist
 from utils.equilibrium import optimal_data_local, optimal_data_fed
 from train_test import local_training, federated_training, federated_training_nonuniform
 from mpi4py import MPI
@@ -8,6 +8,7 @@ import numpy as np
 import torchvision.models as models
 from config import configs
 from utils.recorder import Recorder
+from utils.custom_models import MNIST
 import copy
 
 # split data up amongst 16 devices, then show how well a centralized model performs using 1-16
@@ -17,7 +18,7 @@ import copy
 if __name__ == '__main__':
 
     # determine config
-    dataset = 'cifar10'
+    dataset = 'mnist'
     config = configs[dataset]
 
     # determine hyper-parameters
@@ -31,6 +32,7 @@ if __name__ == '__main__':
     local_steps = config['local_steps']
     uniform_payoff = config['uniform_payoff']
     uniform_cost = config['uniform_cost']
+    a_opt = config['a_opt']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
@@ -81,11 +83,7 @@ if __name__ == '__main__':
     recorder.save_payoff_c(c)
 
     # determine local data contributions
-    # create different payoff functions as well (might multiply by a constant out front of the payoff function)
-    # marginal_cost = np.random.uniform(9e-3, 0.0099)
-    # marginal_cost = 5e-3
-    # marginal_cost = 1e-3
-    b_local = optimal_data_local(marginal_cost, c=c)
+    b_local = optimal_data_local(marginal_cost, c=c, a_opt=a_opt)
 
     print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
 
@@ -98,10 +96,17 @@ if __name__ == '__main__':
     FLC.self_weight = self_weight
 
     # load CIFAR10 data
-    trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
+    if dataset == 'cifar10':
+        trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
+        model = models.resnet18()
+    elif dataset == 'mnist':
+        trainloader, testloader = load_mnist(device_num_data, rank, train_batch_size, test_batch_size)
+        model = MNIST()
+    else:
+        print('ERROR: Dataset Provided Is Not Valid.')
+        exit()
 
     # use ResNet18
-    model = models.resnet18()
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 

@@ -3,6 +3,7 @@ configs = {
         'train_bs': 128,
         'test_bs': 128,
         'lr': 1e-3,
+        'a_opt': 0.95,
         'marginal_cost': 7e-3,
         'local_steps': 6,
         'random_seed': 1996,
@@ -14,7 +15,24 @@ configs = {
         'uniform_payoff': False,
         'uniform_cost': False,
         'name': 'realfm-nonuniformP-run1'
-    }
+    },
+
+    'mnist': {
+            'train_bs': 128,
+            'test_bs': 128,
+            'lr': 1e-3,
+            'a_opt': 0.995,
+            'marginal_cost': 1.3e-2,
+            'local_steps': 6,
+            'random_seed': 1996,
+            'log_frequency': 30,
+            'test_batches': 30,
+            'epochs': 20,
+            'file_path': 'output',
+            'uniform_payoff': True,
+            'uniform_cost': True,
+            'name': 'test-mnist'  # 'realfm-nonuniformP-run1'
+        }
 }
 
 # Best ablation was
