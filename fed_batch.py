@@ -149,18 +149,19 @@ if __name__ == '__main__':
                                    log_frequency, recorder, local_steps=local_steps)
     else:
         if uniform_payoff:
-            b_local_uniform = optimal_data_local(og_marginal_cost, c=1)
+            b_local_uniform = optimal_data_local(og_marginal_cost, c=1, linear=linear_utility)
         else:
-            b_local_uniform = optimal_data_local(og_marginal_cost, c=avg)
+            b_local_uniform = optimal_data_local(og_marginal_cost, c=avg, linear=linear_utility)
 
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
+        print(steps_per_epoch)
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
                                               steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
 
     MPI.COMM_WORLD.Barrier()
 
     # compute the optimal contributions that would've maximized utility
-    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c)
+    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c, linear=linear_utility)
 
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')

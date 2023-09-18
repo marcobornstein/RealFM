@@ -58,6 +58,7 @@ if __name__ == '__main__':
     iters = np.arange(1, epochs + 1)
     each_dev_local_a = []
 
+    # strictly accuracy plots
     '''
     for trial in range(1, 4):
         file = 'output/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'

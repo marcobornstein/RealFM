@@ -4,13 +4,13 @@ configs = {
         'test_bs': 1024,
         'lr': 1e-3,
         'a_opt': 0.95,
-        'marginal_cost': 1e-5,
+        'marginal_cost': 2.326e-5,
         'local_steps': 6,
         'random_seed': 1996,
         'test_frequency': 500,
         'log_frequency': 30,
         'test_batches': 30,
-        'epochs': 100,
+        'epochs': 1,
         'file_path': 'output',
         'uniform_payoff': True,
         'uniform_cost': False,
@@ -46,7 +46,8 @@ configs = {
 # train_bs = 128, local_steps = 6, mc = 7e-3 (8 devices) NON-UNIFORM
 
 # CIFAR 10 (Linear)
-# train_bs = 128, local_steps = 6, mc = 1e-5 (8 devices) UNIFORM
+# train_bs = 128, local_steps = 6, mc = 8.5258e-6 (8 devices) UNIFORM
+# train_bs = 128, local_steps = 6, mc = 2.326e-5 (16 devices) UNIFORM
 
 
 # MNIST
