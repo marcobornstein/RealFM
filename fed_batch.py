@@ -148,7 +148,11 @@ if __name__ == '__main__':
         a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs,
                                    log_frequency, recorder, local_steps=local_steps)
     else:
-        b_local_uniform = optimal_data_local(og_marginal_cost, c=avg)
+        if uniform_payoff:
+            b_local_uniform = optimal_data_local(og_marginal_cost, c=1)
+        else:
+            b_local_uniform = optimal_data_local(og_marginal_cost, c=avg)
+
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
                                               steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
