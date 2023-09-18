@@ -4,7 +4,7 @@ configs = {
         'test_bs': 1024,
         'lr': 1e-3,
         'a_opt': 0.95,
-        'marginal_cost': 2.326e-5,
+        'marginal_cost': 5.694e-3,
         'local_steps': 6,
         'random_seed': 1996,
         'test_frequency': 500,
@@ -12,10 +12,10 @@ configs = {
         'test_batches': 30,
         'epochs': 1,
         'file_path': 'output',
-        'uniform_payoff': True,
+        'uniform_payoff': False,
         'uniform_cost': False,
-        'linear_utility': True,
-        'name': 'linear-nonuniformC-run1'
+        'linear_utility': False,
+        'name': 'linear-nonuniformPC-run1'
     },
 
     'mnist': {
@@ -37,17 +37,18 @@ configs = {
         }
 }
 
-
-# CIFAR 10 (Realistic)
-# train_bs = 128, local_steps = 6, mc = 4.15e-3 (8 devices) UNIFORM
-# train_bs = 128, local_steps = 6, mc = 5.62e-3 (16 devices) UNIFORM
-
-# train_bs = 128, local_steps = 6, mc = 9e-3 (16 devices) NON-UNIFORM
-# train_bs = 128, local_steps = 6, mc = 7e-3 (8 devices) NON-UNIFORM
-
-# CIFAR 10 (Linear)
-# train_bs = 128, local_steps = 6, mc = 8.5258e-6 (8 devices) UNIFORM
-# train_bs = 128, local_steps = 6, mc = 2.326e-5 (16 devices) UNIFORM
+# CIFAR 10 (Realistic): Non-Uniform (Expected Payoff is 1 (ranges between 1/2 and 3/2)) & Uniform (Payoff = 1)
+# 8 Device: Expected Dataset size is 5,500 --> MC = 4.3755e-3
+# train_bs = 128, local_steps = 6, mc = 4.3755e-3 (8 devices)
+# 16 Device: Expected Dataset size is 3,000 --> MC = 5.694e-3
+# train_bs = 128, local_steps = 6, mc = 5.694e-3 (16 devices)
+# =======================================================================
+# CIFAR 10 (Linear):
+# 8 Device: Expected Dataset size is 5,500 --> MC = 1.00185e-5
+# train_bs = 128, local_steps = 6, mc = 1.00185e-5 (8 devices)
+# 16 Device: Expected Dataset size is 3,000 --> MC = 2.442e-5
+# train_bs = 128, local_steps = 6, mc = 2.442e-5 (16 devices)
+# =======================================================================
 
 
 # MNIST

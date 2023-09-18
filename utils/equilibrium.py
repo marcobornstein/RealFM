@@ -62,12 +62,18 @@ def optimal_data_local(cost, b=2, k=1, linear=False, c=1, a_opt=0.95):
 
     if util <= 0:
         num_data = 0
+        util = 0
     else:
         num_data = int(sol)
 
-    return num_data
+    return num_data, util
 
 
-def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, linear=False):
+def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, k=1, a=1, b=2, linear=False, a_opt=0.95):
     sol = scipy.optimize.root(accuracy_shaping_max, np.array(b_local), args=(b_local, a_local, a_fed, mc, c, linear))
-    return int(sol.x)
+    num_data = int(sol.x)
+    if linear:
+        util = a_fed - mc*num_data
+    else:
+        util = c*accuracy_utility(a_fed, a, b) - mc*num_data
+    return num_data, util
