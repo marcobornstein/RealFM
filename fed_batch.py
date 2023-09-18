@@ -18,7 +18,7 @@ import copy
 if __name__ == '__main__':
 
     # determine config
-    dataset = 'mnist'
+    dataset = 'cifar10'
     config = configs[dataset]
 
     # determine hyper-parameters
@@ -32,6 +32,7 @@ if __name__ == '__main__':
     local_steps = config['local_steps']
     uniform_payoff = config['uniform_payoff']
     uniform_cost = config['uniform_cost']
+    linear_utility = config['linear_utility']
     a_opt = config['a_opt']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
@@ -83,7 +84,7 @@ if __name__ == '__main__':
     recorder.save_payoff_c(c)
 
     # determine local data contributions
-    b_local = optimal_data_local(marginal_cost, c=c, a_opt=a_opt)
+    b_local = optimal_data_local(marginal_cost, c=c, a_opt=a_opt, linear=linear_utility)
 
     print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
 

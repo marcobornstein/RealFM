@@ -36,15 +36,18 @@ def inverse_old_utility(num_data, cost, k, a_opt=0.95):
     return -old_utility(num_data, cost, k, a_opt=a_opt)
 
 
-def accuracy_shaping(b, b_local, a_bar, mc, c, eps=1e-9):
-    phi_dx = accuracy_utility_dx(a_bar, 1, 2, c)
-    phi_ddx = accuracy_utility_ddx(a_bar, 1, 2, c)
-    gamma = (-phi_dx + np.sqrt(phi_dx**2 + (2*phi_ddx)*(mc+eps)*(b-b_local)))/phi_ddx
+def accuracy_shaping(b, b_local, a_bar, mc, c, linear=False, eps=1e-9):
+    if linear:
+        gamma = (mc+eps)*(b-b_local)
+    else:
+        phi_dx = accuracy_utility_dx(a_bar, 1, 2, c)
+        phi_ddx = accuracy_utility_ddx(a_bar, 1, 2, c)
+        gamma = (-phi_dx + np.sqrt(phi_dx**2 + (2*phi_ddx)*(mc+eps)*(b-b_local)))/phi_ddx
     return gamma
 
 
-def accuracy_shaping_max(b, b_local, a_bar, a_fed, mc, c):
-    acc_diff = a_fed - (a_bar + accuracy_shaping(b, b_local, a_bar, mc, c))
+def accuracy_shaping_max(b, b_local, a_bar, a_fed, mc, c, linear=False):
+    acc_diff = a_fed - (a_bar + accuracy_shaping(b, b_local, a_bar, mc, c, linear))
     return acc_diff
 
 
@@ -65,6 +68,6 @@ def optimal_data_local(cost, b=2, k=1, linear=False, c=1, a_opt=0.95):
     return num_data
 
 
-def optimal_data_fed(a_local, a_fed, b_local, mc, c=1):
-    sol = scipy.optimize.root(accuracy_shaping_max, np.array(b_local), args=(b_local, a_local, a_fed, mc, c))
+def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, linear=False):
+    sol = scipy.optimize.root(accuracy_shaping_max, np.array(b_local), args=(b_local, a_local, a_fed, mc, c, linear))
     return int(sol.x)
