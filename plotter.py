@@ -1,6 +1,7 @@
 import os
 import matplotlib.pyplot as plt
 import numpy as np
+from utils.equilibrium import accuracy_utility, accuracy
 
 
 def unpack_data(directory_path, epochs, num_workers, datatype='fed-epoch-acc-top1.log'):
@@ -103,26 +104,51 @@ if __name__ == '__main__':
     # plot data contribution plot and bar chart
 
     # fed_a = y_mean[-1] * np.ones(nw)
-    local_b = np.ones((3, nw)) * np.nan
-    fed_b = np.ones((3, nw)) * np.nan
-    payoff_b = np.ones((3, nw)) * np.nan
-    uniform = False
+    nw = 8
+    a_opt = 0.9
+    k = 18
+    local_b = np.ones((15, nw)) * np.nan
+    fed_b = np.ones((15, nw)) * np.nan
+    payoff = np.ones((15, nw)) * np.nan
+    mc = np.ones((15, nw)) * np.nan
 
-    for trial in range(1, 4):
+    for trial in range(2, 4):
 
-        if uniform:
-            file = 'output/Cifar10/uniform/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-            optimal_data = unpack_data(file, 2, nw, datatype='update-contribution.log')
-            local_b[trial - 1, :] = optimal_data[0, :]
-            fed_b[trial - 1, :] = optimal_data[1, :]
+        file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
+        mc[trial - 1, :] = optimal_data[0, :]
+        payoff[trial - 1, :] = optimal_data[1, :]
+        local_b[trial - 1, :] = optimal_data[2, :]
+        fed_b[trial - 1, :] = optimal_data[3, :]
 
-        else:
-            # file = 'output/Cifar10/non-uniform/realfm-nonuniformP-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-            file = 'output/Cifar10/non-uniform/realfm-nonuniformPC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-            optimal_data = unpack_data(file, 3, nw, datatype='update-contribution.log')
-            payoff_b[trial-1, :] = optimal_data[0, :]
-            local_b[trial-1, :] = optimal_data[1, :]
-            fed_b[trial-1, :] = optimal_data[2, :]
+        # file = 'output/Cifar10/non-uniform/realfm-nonuniformP-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/Cifar10/realfm-nonuniformPC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
+        mc[trial + 2, :] = optimal_data[0, :]
+        payoff[trial + 2, :] = optimal_data[1, :]
+        local_b[trial + 2, :] = optimal_data[2, :]
+        fed_b[trial + 2, :] = optimal_data[3, :]
+
+        file = 'output/Cifar10/realfm-nonuniformC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
+        mc[trial + 5, :] = optimal_data[0, :]
+        payoff[trial + 5, :] = optimal_data[1, :]
+        local_b[trial + 5, :] = optimal_data[2, :]
+        fed_b[trial + 5, :] = optimal_data[3, :]
+
+        file = 'output/Cifar10/realfm-linear-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
+        mc[trial + 8, :] = optimal_data[0, :]
+        payoff[trial + 8, :] = optimal_data[1, :]
+        local_b[trial + 8, :] = optimal_data[2, :]
+        fed_b[trial + 8, :] = optimal_data[3, :]
+
+        file = 'output/Cifar10/realfm-linear-nonuniformC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
+        mc[trial + 11, :] = optimal_data[0, :]
+        payoff[trial + 11, :] = optimal_data[1, :]
+        local_b[trial + 11, :] = optimal_data[2, :]
+        fed_b[trial + 11, :] = optimal_data[3, :]
 
     # local_a = np.mean(np.stack(each_dev_local_a, axis=0), axis=0)
     local_b = np.nanmean(local_b, axis=0)
@@ -147,23 +173,32 @@ if __name__ == '__main__':
         plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'+{val:.0f}%', ha='center', va='bottom', fontsize=7)
 
     savefilename2 = str(nw) + 'device-bar-mean' + '.png'
-    plt.savefig(savefilename2, dpi=200)
-    # plt.show()
+    # plt.savefig(savefilename2, dpi=200)
+    plt.show()
     # '''
 
     # scatter plot
-    '''
+    # '''
     plt.figure()
+
+    for i in range(15):
+        avg_data = np.average(local_b[i, :])
+        total_fed = np.sum(fed_b[i, :])
+
+        # local baseline
+        acc_local = accuracy(avg_data, a_opt, k)
+        proj_utility_local = accuracy_utility(acc_local, 1, 2)
+
+        # our mechanism baseline
+
+
+
     # plt.scatter(local_b, local_a, color='r')
     # plt.scatter(fed_b, fed_a, color='b')
-    for i in range(len(local_b)):
-        x = np.array([local_b[i], fed_b[i]])
-        y = np.array([local_a[i], fed_a[i]])
-        plt.plot(x, y)
 
     plt.ylabel('Test Accuracy', fontsize=13)
     plt.xlabel('Update Contribution ($b_i$)', fontsize=13)
     plt.grid(which="both", alpha=0.25)
     # plt.xscale("symlog")
     plt.show()
-    '''
+    # '''

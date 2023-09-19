@@ -6,7 +6,7 @@ configs = {
         'a_opt': 0.9,
         'marginal_cost': 8.353e-4,
         'local_steps': 6,
-        'random_seed': 1996,
+        'random_seed': 1948,
         'test_frequency': 500,
         'log_frequency': 60,
         'test_batches': 30,
@@ -51,6 +51,8 @@ configs = {
 # 16 Device: Expected Dataset size is 3,000 --> MC = 5.403e-5
 # train_bs = 128, local_steps = 6, mc = 5.403e-5 (16 devices)
 # =======================================================================
+
+# rerun realfm-nonuniformC-run1-cifar10-8devices
 
 # for 16 device, payoff function between 0.9 and 1.1 because data will be zero
 

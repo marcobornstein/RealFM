@@ -149,9 +149,9 @@ if __name__ == '__main__':
                                    log_frequency, recorder, local_steps=local_steps)
     else:
         if uniform_payoff:
-            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, linear=linear_utility)
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, a_opt=a_opt, linear=linear_utility)
         else:
-            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, linear=linear_utility)
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, a_opt=a_opt, linear=linear_utility)
 
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
