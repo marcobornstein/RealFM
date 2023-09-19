@@ -66,15 +66,15 @@ if __name__ == '__main__':
     if uniform_payoff:
         c = 1
     else:
-        low = 0.8
-        high = 1.2
+        low = 0.9
+        high = 1.1
         avg = (high+low)/2
         c = np.random.uniform(low, high)
 
     if uniform_cost:
         marginal_cost = marginal_cost
     else:
-        marginal_cost = np.random.normal(marginal_cost, 0.1*marginal_cost)
+        marginal_cost = np.random.normal(marginal_cost, 0.05*marginal_cost)
 
     if uniform_payoff and uniform_cost:
         nu = False
