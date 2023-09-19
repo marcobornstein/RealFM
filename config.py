@@ -3,8 +3,8 @@ configs = {
         'train_bs': 128,
         'test_bs': 1024,
         'lr': 1e-3,
-        'a_opt': 0.95,
-        'marginal_cost': 1.23725e-3,
+        'a_opt': 0.9,
+        'marginal_cost': 9.075e-4,
         'local_steps': 6,
         'random_seed': 1996,
         'test_frequency': 500,
@@ -40,10 +40,10 @@ configs = {
 }
 
 # CIFAR 10 (Realistic): Non-Uniform (Expected Payoff is 1 (ranges between 4/5 and 6/5)) & Uniform (Payoff = 1), K=25
-# 8 Device: Expected Dataset size is 5,500 --> MC = 1.0555e-3
-# train_bs = 128, local_steps = 6, mc = 1.0555e-3 (8 devices)
-# 16 Device: Expected Dataset size is 3,000 --> MC = 1.23725e-3
-# train_bs = 128, local_steps = 6, mc = 1.23725e-3 (16 devices)
+# 8 Device: Expected Dataset size is 5,500 --> MC = 7.168e-4
+# train_bs = 128, local_steps = 6, mc = 7.168e-4 (8 devices)
+# 16 Device: Expected Dataset size is 3,000 --> MC = 9.075e-4
+# train_bs = 128, local_steps = 6, mc = 9.075e-4 (16 devices)
 # =======================================================================
 # CIFAR 10 (Linear):
 # 8 Device: Expected Dataset size is 5,500 --> MC = 2.528e-5
@@ -52,7 +52,7 @@ configs = {
 # train_bs = 128, local_steps = 6, mc = 5.995e-5 (16 devices)
 # =======================================================================
 
-# realfm-uniform-run3-cifar10-16devices-18175113 is supposed to be realfm-linear-run3-cifar10-16devices
+# for 16 device, payoff function between 0.9 and 1.1 because data will be zero
 
 # MNIST
 # train_bs = 128, local_steps = 6, mc = 1.3e-2 (16 devices) UNIFORM
