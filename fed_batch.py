@@ -34,6 +34,7 @@ if __name__ == '__main__':
     uniform_cost = config['uniform_cost']
     linear_utility = config['linear_utility']
     a_opt = config['a_opt']
+    k = config['k']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
@@ -65,8 +66,8 @@ if __name__ == '__main__':
     if uniform_payoff:
         c = 1
     else:
-        low = 0.75
-        high = 1.25
+        low = 0.8
+        high = 1.2
         avg = (high+low)/2
         c = np.random.uniform(low, high)
 
@@ -85,7 +86,7 @@ if __name__ == '__main__':
     recorder.save_payoff_c(c)
 
     # determine local data contributions
-    b_local, u_local = optimal_data_local(marginal_cost, c=c, a_opt=a_opt, linear=linear_utility)
+    b_local, u_local = optimal_data_local(marginal_cost, c=c, k=k, a_opt=a_opt, linear=linear_utility)
 
     print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
 
@@ -135,8 +136,6 @@ if __name__ == '__main__':
     MPI.COMM_WORLD.Barrier()
 
     # reset model to the initial model
-    # model = models.resnet18()
-    # model.load_state_dict(torch.load('initial_weights.pth'))
     model = torch.load(model_path)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     model.to(device)
@@ -150,9 +149,9 @@ if __name__ == '__main__':
                                    log_frequency, recorder, local_steps=local_steps)
     else:
         if uniform_payoff:
-            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, linear=linear_utility)
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, linear=linear_utility)
         else:
-            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, linear=linear_utility)
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, linear=linear_utility)
 
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
@@ -161,9 +160,9 @@ if __name__ == '__main__':
     MPI.COMM_WORLD.Barrier()
 
     # compute the optimal contributions that would've maximized utility
-    b_fed, u_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c, linear=linear_utility)
+    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c, linear=linear_utility)
 
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
     recorder.save_data_contributions(b_local, b_fed)
-    recorder.save_data_contributions(u_local, u_fed)
+    # recorder.save_data_contributions(u_local, u_fed)

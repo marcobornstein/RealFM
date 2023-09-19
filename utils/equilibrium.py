@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+from mpi4py import MPI
 
 
 def accuracy(x, a_opt, k):
@@ -69,11 +70,23 @@ def optimal_data_local(cost, b=2, k=1, linear=False, c=1, a_opt=0.95):
     return num_data, util
 
 
-def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, k=1, a=1, b=2, linear=False, a_opt=0.95):
+def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, linear=False):
     sol = scipy.optimize.root(accuracy_shaping_max, np.array(b_local), args=(b_local, a_local, a_fed, mc, c, linear))
     num_data = int(sol.x)
+    return num_data
+
+    '''
+    # in order to partition data without overlap, share the amount of data each device will use
+    device_num_data = np.empty(size, dtype=np.int32)
+    MPI.COMM_WORLD.Allgather(np.array([num_data], dtype=np.int32), device_num_data)
+    total_data = np.sum(device_num_data)
+
     if linear:
         util = a_fed - mc*num_data
     else:
+        acc = accuracy(total_data, a_opt, k)
+        util = c * accuracy_utility(acc, a, b) - mc * num_data
+        print(util)
         util = c*accuracy_utility(a_fed, a, b) - mc*num_data
     return num_data, util
+    '''
