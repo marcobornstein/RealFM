@@ -1,1 +1,0 @@
-{'train_bs': 128, 'test_bs': 1024, 'lr': 0.001, 'a_opt': 0.9, 'marginal_cost': 5.403e-05, 'local_steps': 6, 'random_seed': 2019, 'test_frequency': 500, 'log_frequency': 60, 'test_batches': 30, 'epochs': 100, 'k': 18, 'file_path': 'output', 'uniform_payoff': True, 'uniform_cost': False, 'linear_utility': True, 'name': 'realfm-linear-nonuniform-run3'}

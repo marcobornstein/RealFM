@@ -18,7 +18,7 @@ import copy
 if __name__ == '__main__':
 
     # determine config
-    dataset = 'cifar10'
+    dataset = 'mnist'
     config = configs[dataset]
 
     # determine hyper-parameters
@@ -35,6 +35,7 @@ if __name__ == '__main__':
     linear_utility = config['linear_utility']
     a_opt = config['a_opt']
     k = config['k']
+    simple_acc = config['simple_acc']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
@@ -86,7 +87,8 @@ if __name__ == '__main__':
     recorder.save_payoff_c(c)
 
     # determine local data contributions
-    b_local, u_local = optimal_data_local(marginal_cost, c=c, k=k, a_opt=a_opt, linear=linear_utility)
+    b_local, u_local = optimal_data_local(marginal_cost, c=c, k=k, a_opt=a_opt, linear=linear_utility,
+                                          simple_acc=simple_acc)
 
     print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
 
@@ -149,9 +151,11 @@ if __name__ == '__main__':
                                    log_frequency, recorder, local_steps=local_steps)
     else:
         if uniform_payoff:
-            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, a_opt=a_opt, linear=linear_utility)
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, a_opt=a_opt, linear=linear_utility,
+                                                    simple_acc=simple_acc)
         else:
-            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, a_opt=a_opt, linear=linear_utility)
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, a_opt=a_opt, linear=linear_utility,
+                                                    simple_acc=simple_acc)
 
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,

@@ -13,10 +13,11 @@ configs = {
         'epochs': 100,
         'k': 18,
         'file_path': 'output',
-        'uniform_payoff': False,
-        'uniform_cost': False,
+        'uniform_payoff': True,
+        'uniform_cost': True,
         'linear_utility': False,
-        'name': 'realfm-nonuniformPC-run1'
+        'simple_acc': False,
+        'name': 'realfm-uniform-run1'
     },
 
     'mnist': {
@@ -24,18 +25,19 @@ configs = {
             'test_bs': 1024,
             'lr': 1e-3,
             'a_opt': 0.995,
-            'marginal_cost': 1.2e-2,
+            'marginal_cost': 0.48375,
             'local_steps': 6,
-            'random_seed': 1996,
+            'random_seed': 1948,
             'log_frequency': 30,
             'test_batches': 30,
             'epochs': 50,
-            'k': 1,
+            'simple_acc': True,
+            'k': 0.25,
             'file_path': 'output',
-            'uniform_payoff': True,
-            'uniform_cost': True,
+            'uniform_payoff': False,
+            'uniform_cost': False,
             'linear_utility': False,
-            'name': 'test-mnist'  # 'realfm-nonuniformP-run1'
+            'name': 'realfm-nonuniformPC-run1'
         }
 }
 
@@ -52,15 +54,20 @@ configs = {
 # train_bs = 128, local_steps = 6, mc = 5.403e-5 (16 devices)
 # =======================================================================
 
-# rerun realfm-nonuniformC-run1-cifar10-8devices
-
-# for 16 device, payoff function between 0.9 and 1.1 because data will be zero
-
-
-# MNIST
-# train_bs = 128, local_steps = 6, mc = 1.3e-2 (16 devices) UNIFORM
+# MNIST (Realistic)
+# 8 Device: Expected Dataset size is 5,500 --> MC = 0.3882
+# train_bs = 128, local_steps = 6, mc = 0.3882 (8 devices)
+# 16 Device: Expected Dataset size is 3,000 --> MC = 0.48375
+# train_bs = 128, local_steps = 6, mc = 0.48375 (16 devices)
+# =======================================================================
+# CIFAR 10 (Linear):
+# 8 Device: Expected Dataset size is 5,500 --> MC = 1.2255e-6
+# train_bs = 128, local_steps = 6, mc = 1.2255e-6 (8 devices)
+# 16 Device: Expected Dataset size is 3,000 --> MC = 3.042e-6
+# train_bs = 128, local_steps = 6, mc = 3.042e-6 (16 devices)
+# =======================================================================
 
 # random seeds
-# Run 1: 2000/2010
-# Run 2: 2015
+# Run 1: 1948
+# Run 2: 1996
 # Run 3: 2019
