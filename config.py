@@ -25,7 +25,7 @@ configs = {
             'test_bs': 1024,
             'lr': 1e-3,
             'a_opt': 0.995,
-            'marginal_cost': 0.48375,
+            'marginal_cost': 0.4596,
             'local_steps': 6,
             'random_seed': 1948,
             'log_frequency': 30,
@@ -55,16 +55,16 @@ configs = {
 # =======================================================================
 
 # MNIST (Realistic)
-# 8 Device: Expected Dataset size is 5,500 --> MC = 0.3882
-# train_bs = 128, local_steps = 6, mc = 0.3882 (8 devices)
-# 16 Device: Expected Dataset size is 3,000 --> MC = 0.48375
-# train_bs = 128, local_steps = 6, mc = 0.48375 (16 devices)
+# 8 Device: Expected Dataset size is 7,000 --> MC = 0.350475
+# train_bs = 128, local_steps = 6, mc = 0.350475 (8 devices)
+# 16 Device: Expected Dataset size is 3,500 --> MC = 0.4596
+# train_bs = 128, local_steps = 6, mc = 0.4596 (16 devices)
 # =======================================================================
 # CIFAR 10 (Linear):
-# 8 Device: Expected Dataset size is 5,500 --> MC = 1.2255e-6
-# train_bs = 128, local_steps = 6, mc = 1.2255e-6 (8 devices)
-# 16 Device: Expected Dataset size is 3,000 --> MC = 3.042e-6
-# train_bs = 128, local_steps = 6, mc = 3.042e-6 (16 devices)
+# 8 Device: Expected Dataset size is 7,000 --> MC = 8.537e-7
+# train_bs = 128, local_steps = 6, mc = 8.537e-7 (8 devices)
+# 16 Device: Expected Dataset size is 3,500 --> MC = 2.414e-6
+# train_bs = 128, local_steps = 6, mc = 2.414e-6 (16 devices)
 # =======================================================================
 
 # random seeds
