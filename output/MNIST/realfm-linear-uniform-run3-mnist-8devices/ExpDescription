@@ -1,0 +1,1 @@
+{'train_bs': 128, 'test_bs': 1024, 'lr': 0.001, 'a_opt': 0.995, 'marginal_cost': 8.537e-07, 'local_steps': 6, 'random_seed': 2019, 'log_frequency': 30, 'test_batches': 30, 'epochs': 50, 'simple_acc': True, 'k': 0.25, 'file_path': 'output', 'uniform_payoff': True, 'uniform_cost': True, 'linear_utility': True, 'name': 'realfm-linear-uniform-run3'}
