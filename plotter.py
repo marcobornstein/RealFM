@@ -54,8 +54,8 @@ def plot_ci(x, y, num_runs, num_dots, mylegend, ls='-', lw=3, transparency=0.2):
 
 if __name__ == '__main__':
     colors = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    nw = 8
-    epochs = 100
+    nw = 16
+    epochs = 50
     fed_accs = []
     local_accs = []
     iters = np.arange(1, epochs + 1)
@@ -64,7 +64,8 @@ if __name__ == '__main__':
     # strictly accuracy plots
     '''
     for trial in range(1, 4):
-        file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/MNIST/realfm-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         fed_test_acc = unpack_data(file, epochs, nw)
         local_test_acc = unpack_data(file, epochs, nw, datatype='local-epoch-acc-top1.log')
         fed_accs.append(fed_test_acc[:, 0])
@@ -98,17 +99,19 @@ if __name__ == '__main__':
     # plt.ylim([0.225, 0.48])
     plt.grid(which="both", alpha=0.25)
     # plt.show()
-    savefilename = str(nw) + 'device' + '.png'
+    savefilename = str(nw) + 'device-mnist.png'
     plt.savefig(savefilename, dpi=200)
     '''
 
     # =======================================================
     # plot data contribution plot and bar chart
 
-    # fed_a = y_mean[-1] * np.ones(nw)
+    # '''
     nw = 8
-    a_opt = 0.9
-    k = 18
+    # a_opt = 0.9
+    # k = 18
+    a_opt = 0.995
+    k = 0.25
     local_b = np.ones((15, nw)) * np.nan
     fed_b = np.ones((15, nw)) * np.nan
     payoff = np.ones((15, nw)) * np.nan
@@ -118,54 +121,59 @@ if __name__ == '__main__':
 
     for trial in range(1, 4):
 
-        file = 'output/Cifar10/realfm-nonuniformPC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/Cifar10/realfm-linear-nonuniformC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/MNIST/realfm-linear-nonuniformC-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
         mc[trial - 1, :] = optimal_data[0, :]
         payoff[trial - 1, :] = optimal_data[1, :]
         local_b[trial - 1, :] = optimal_data[2, :]
         fed_b[trial - 1, :] = optimal_data[3, :]
 
-        file = 'output/Cifar10/realfm-nonuniformC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/Cifar10/realfm-linear-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/MNIST/realfm-linear-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
         mc[trial + 2, :] = optimal_data[0, :]
         payoff[trial + 2, :] = optimal_data[1, :]
         local_b[trial + 2, :] = optimal_data[2, :]
         fed_b[trial + 2, :] = optimal_data[3, :]
 
-        file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/Cifar10/realfm-nonuniformPC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/MNIST/realfm-nonuniformPC-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
         mc[trial + 5, :] = optimal_data[0, :]
         payoff[trial + 5, :] = optimal_data[1, :]
         local_b[trial + 5, :] = optimal_data[2, :]
         fed_b[trial + 5, :] = optimal_data[3, :]
 
-        file = 'output/Cifar10/realfm-linear-nonuniformC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/Cifar10/realfm-nonuniformC-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/MNIST/realfm-nonuniformC-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
         mc[trial + 8, :] = optimal_data[0, :]
         payoff[trial + 8, :] = optimal_data[1, :]
         local_b[trial + 8, :] = optimal_data[2, :]
         fed_b[trial + 8, :] = optimal_data[3, :]
 
-        file = 'output/Cifar10/realfm-linear-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        file = 'output/MNIST/realfm-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         optimal_data = unpack_data(file, 4, nw, datatype='update-contribution.log')
         mc[trial + 11, :] = optimal_data[0, :]
         payoff[trial + 11, :] = optimal_data[1, :]
         local_b[trial + 11, :] = optimal_data[2, :]
         fed_b[trial + 11, :] = optimal_data[3, :]
 
+    '''
     # local_a = np.mean(np.stack(each_dev_local_a, axis=0), axis=0)
     local_b_mean = np.nanmean(local_b[:3], axis=0)
     fed_b_mean = np.nanmean(fed_b[:3], axis=0)
 
     # bar plot
-    '''
     added_b = fed_b_mean - local_b_mean
     devices = np.arange(1, nw+1)
     plt.figure()
-    plt.bar(devices, local_b_mean, label='Local Optimal Contributions $(b_i^o)$')
-    bar = plt.bar(devices, added_b, bottom=local_b_mean, label='Incentivized Contributions $(b_i^* - b_i^o)$')
+    plt.bar(devices, local_b_mean, label='Local Optimal Contributions $(g_i^o)$')
+    bar = plt.bar(devices, added_b, bottom=local_b_mean, label='Incentivized Contributions $(g_i^* - g_i^o)$')
     plt.xlabel('Devices', fontsize=13)
-    plt.ylabel('Update Contribution ($b_i$)', fontsize=13)
+    plt.ylabel('Average Gradient Contribution ($g_i$)', fontsize=13)
     plt.xticks(devices)
     plt.legend(loc='lower left', fontsize=10)
     # plt.ylim([0, 5500])
@@ -175,7 +183,7 @@ if __name__ == '__main__':
         height = rect.get_height() + local_b_mean[i]
         plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'+{val:.0f}%', ha='center', va='bottom', fontsize=6)
 
-    savefilename2 = str(nw) + 'device-bar-mean-nonuniformPC' + '.png'
+    savefilename2 = str(nw) + 'device-bar-mean-linear-nonuniformC-cifar.png'
     plt.savefig(savefilename2, dpi=200)
     # plt.show()
     '''
@@ -184,11 +192,14 @@ if __name__ == '__main__':
     # SERVER BAR CHART
     # both 1) average gradient contributions across devices and 2) server utility
 
-    '''
-    x = ['Non-Uniform Payoff & Cost', 'Non-Uniform Cost', 'Uniform',
-         'Non-Uniform Cost', 'Uniform', 'Local Training']
+    # '''
 
-    x = ['\n'.join(wrap(l, 15)) for l in x]
+    # x = ['Uniform\n (L Payoff)', 'Uniform\n (NL Payoff)', 'N-Uniform\n Cost', 'Uniform',
+    #      'N-Uniform  \n Payoff & Cost', 'N-Uniform\n Cost', 'Uniform']
+
+    x = ['U-LP', 'U-NLP', 'NU-C', 'U-LP', 'NU-PC', 'NU-C', 'U-NLP']
+
+    # x = ['\n'.join(wrap(l, 15)) for l in x]
 
     # local baseline (expected)
     if nw == 16:
@@ -200,157 +211,206 @@ if __name__ == '__main__':
     trials = 3
     avg_data_fed = np.empty(num_baselines)
     avg_utility_fed = np.empty(num_baselines)
-    avg_data_fed[-1] = expected_local_b
+    avg_data_fed[:2] = expected_local_b
     a_local = accuracy(expected_local_b, a_opt, k)
-    avg_utility_fed[-1] = accuracy_utility(a_local, 1, 2)
+    avg_utility_fed[0] = a_local
+    avg_utility_fed[1] = accuracy_utility(a_local, 1, 2)
 
-    ind1 = np.arange(3)
-    ind2 = np.arange(3, 5)
-    ind3 = 5
+    local_ind = np.arange(2)
+    linear_ind = np.arange(2, 4)
+    nonlinear_ind = np.arange(4, 7)
 
-    width = 0.3
-    for i in range(num_baselines-1):
+    for i in range(num_baselines-2):
         all_data_avg = np.average(np.sum(fed_b[trials*i:(trials*(i+1)), :], axis=1))
         total_fed = np.average(fed_b[trials*i:(trials*(i+1)), :], axis=1)
-        avg_data_fed[i] = np.average(total_fed)
+        avg_data_fed[i+2] = np.average(total_fed)
 
         # mechanism baseline
         acc_fed = accuracy(all_data_avg, a_opt, k)
-        avg_utility_fed[i] = accuracy_utility(acc_fed, 1, 2)
+        if i < 2:
+            # linear utility
+            avg_utility_fed[i+2] = acc_fed
+        else:
+            # non-linear utility
+            avg_utility_fed[i+2] = accuracy_utility(acc_fed, 1, 2)
 
+    width = 0.45
     fig, ax1 = plt.subplots(figsize=(10, 6))
 
     # create axis labels
-    ax1.set_xlabel('Training Methods', fontsize=13)
-    ax1.set_ylabel('Server Utility', color='tab:red', fontsize=13)
-    ax1.bar(ind1, avg_utility_fed[:3], width, color='tab:red')
-    ax1.bar(ind2, avg_utility_fed[3:5], width, color='tab:red', hatch='//')
-    ax1.bar(ind3, avg_utility_fed[-1], width, color='tab:red', hatch='o')
-    ax1.tick_params(axis='y', labelcolor='tab:red')
+    # ax1.set_xlabel('Training Methods', fontsize=13)
+    ax1.set_ylabel('Server Utility', fontsize=18, weight='bold')
+    ax1.bar(local_ind, avg_utility_fed[:2], width, color='tab:red')
+    ax1.bar(linear_ind, avg_utility_fed[2:4], width, color='tab:green')
+    ax1.bar(nonlinear_ind, avg_utility_fed[4:], width, color='tab:blue')
+    plt.xticks(np.arange(num_baselines), x, weight='bold', fontsize=15)
+    ax1.grid(axis='y', alpha=0.25)
 
-    # Adding Twin Axes
-    ax2 = ax1.twinx()
-    ax2.set_ylabel('Average Gradient Contributions Across Devices', color='tab:blue', fontsize=13)
-    ax2.bar(ind1 + width, avg_data_fed[:3], width, color='tab:blue', label='Non-Linear RealFM')
-    ax2.bar(ind2 + width, avg_data_fed[3:5], width, color='tab:blue', hatch='//', label='Linear RealFM')
-    ax2.bar(ind3 + width, avg_data_fed[-1], width, color='tab:blue', hatch='o', label='No Mechanism')
-    ax2.tick_params(axis='y', labelcolor='tab:blue')
+    max_u = np.max(avg_utility_fed)*4.7
+    # max_u = np.max(avg_utility_fed) * 1.15
 
-    plt.xticks(np.arange(num_baselines) + width / 2, x)
-    plt.legend()
+    # for mnist
+    ax1.set_yscale('log')
+    ax1.set_ylim([0, max_u])
+
+    # nonlinear_h = (np.max(avg_utility_fed[4:]) / max_u) + 0.01
+    # linear_h = (np.max(avg_utility_fed[2:4]) / max_u) + 0.02
+    # local_h = (np.max(avg_utility_fed[:2]) / max_u) + 0.02
+
+    nonlinear_h = 0.87
+    linear_h = 0.07
+    local_h = 0.53
+
+    ax1.annotate('Non-Linear RealFM', xy=(0.781, nonlinear_h), xytext=(0.781, nonlinear_h+0.05), xycoords='axes fraction',
+                fontsize=18, ha='center', va='bottom', weight='bold', color='tab:blue',
+                bbox=dict(boxstyle='square', fc='white', color='k'),
+                arrowprops=dict(arrowstyle='-[, widthB=6.5, lengthB=1', lw=2.0, color='k'))
+
+    ax1.annotate('Linear RealFM', xy=(0.43, linear_h), xytext=(0.43, linear_h+0.05), xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:green',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=4.0, lengthB=1', lw=2.0, color='k'))
+
+    ax1.annotate('Linear & Non-Linear\n Local Training', xy=(0.1425, local_h), xytext=(0.1425, local_h+0.05), xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:red',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=4.25, lengthB=1', lw=2.0, color='k'))
+
+    ax1.yaxis.tick_right()
+    ax1.yaxis.set_label_position("right")
+    ax1.tick_params(axis='y', which='major', labelsize=16)
+
+
+    plt.tight_layout()
     # plt.show()
-    plt.savefig('realfm-server-u-8.png', dpi=200)
-    '''
+    title = 'realfm-server-utility-' + str(nw) + 'devices-mnist.png'
+    plt.savefig(title, dpi=200)
+
+    fig2, ax2 = plt.subplots(figsize=(10, 6))
+
+    ax2.set_ylabel('Average Device Data Contribution', fontsize=18, weight='bold')
+    ax2.bar(local_ind, avg_data_fed[:2], width, color='tab:red')
+    ax2.bar(linear_ind, avg_data_fed[2:4], width, color='tab:green')
+    ax2.bar(nonlinear_ind, avg_data_fed[4:], width, color='tab:blue')
+    ax2.grid(axis='y', alpha=0.25)
+
+    plt.xticks(np.arange(num_baselines), x, weight='bold', fontsize=15)
+
+    max_u = np.max(avg_data_fed)*1.15
+    ax2.set_ylim([0, max_u])
+
+    nonlinear_h = (np.max(avg_data_fed[4:]) / max_u) + 0.01
+    linear_h = (np.max(avg_data_fed[2:4]) / max_u) + 0.02
+    local_h = (np.max(avg_data_fed[:2]) / max_u) + 0.02
+
+    ax2.annotate('Non-Linear RealFM', xy=(0.781, nonlinear_h), xytext=(0.781, nonlinear_h + 0.05),
+                 xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:blue',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=6.5, lengthB=1', lw=2.0, color='k'))
+
+    ax2.annotate('Linear RealFM', xy=(0.4275, linear_h), xytext=(0.4275, linear_h + 0.05), xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:green',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=4.0, lengthB=1', lw=2.0, color='k'))
+
+    ax2.annotate('Linear & Non-Linear\n Local Training', xy=(0.14, local_h), xytext=(0.14, local_h + 0.05),
+                 xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:red',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=4.25, lengthB=1', lw=2.0, color='k'))
+
+    ax2.yaxis.tick_right()
+    ax2.yaxis.set_label_position("right")
+    ax2.tick_params(axis='y', which='major', labelsize=16)
+
+    plt.tight_layout()
+    # plt.show()
+    title = 'realfm-server-data-produced-' + str(nw) + 'devices-mnist.png'
+    plt.savefig(title, dpi=200)
+    # '''
 
     # CLIENT BAR CHART
-    # do the same but plot device accuracy
+    # do the same but plot device accuracy and device utility
 
     '''
-    x = ['Non-Linear RealFM', 'Linear RealFM', 'Local Training']
-    nw = 8
+    # x = ['Uniform\n (L Payoff)', 'Uniform\n (NL Payoff)', 'Uniform', 'Uniform']
+    x = ['U-LP', 'U-NLP', 'U', 'U']
     num_baselines = len(x)
     trials = 3
-    avg_acc_fed = np.empty(num_baselines)
-    costs = np.array([0.001234, 0.000311725, 0.001234])
-    width = 0.3
-    matplotlib.rc('ytick', labelcolor='tab:blue')
+    avg_acc = np.zeros(num_baselines)
+    avg_acc_util = np.zeros(num_baselines)
+    width = 0.5
+    epochs = 100
 
-    fed_acc = 0
-    fed_acc2 = 0
-    local_acc = 0
-    for i in range(num_baselines):
+    for trial in range(1, 4):
 
         file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-        optimal_data = unpack_data(file, 100, nw, datatype='fed-epoch-acc-top1.log')
-        fed_acc += optimal_data[-1, 0]
-        optimal_data = unpack_data(file, 100, nw, datatype='local-epoch-acc-top1.log')
-        local_acc += np.average(optimal_data[-1, :])
+        # file = 'output/MNIST/realfm-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, epochs, nw, datatype='fed-epoch-acc-top1.log')
+        avg_acc[3] += optimal_data[-1, 0]
+        optimal_data = unpack_data(file, epochs, nw, datatype='local-epoch-acc-top1.log')
+        avg_acc[1] += np.average(optimal_data[-1, :])
 
         file = 'output/Cifar10/realfm-linear-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-        optimal_data = unpack_data(file, 100, nw, datatype='fed-epoch-acc-top1.log')
-        fed_acc2 += optimal_data[-1, 0]
-        optimal_data = unpack_data(file, 100, nw, datatype='local-epoch-acc-top1.log')
-        local_acc += np.average(optimal_data[-1, :])
+        # file = 'output/MNIST/realfm-linear-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
+        optimal_data = unpack_data(file, epochs, nw, datatype='fed-epoch-acc-top1.log')
+        avg_acc[2] += optimal_data[-1, 0]
+        optimal_data = unpack_data(file, epochs, nw, datatype='local-epoch-acc-top1.log')
+        avg_acc[0] += np.average(optimal_data[-1, :])
 
     # determine average accs
-    avg_acc_fed[0] = fed_acc / 3
-    avg_acc_fed[1] = fed_acc2 / 3
-    avg_acc_fed[2] = local_acc / 6
+    avg_acc = avg_acc / 3
+    avg_acc_util[0] = avg_acc[0]
+    avg_acc_util[1] = accuracy_utility(avg_acc[1], 1, 2)
+    avg_acc_util[2] = avg_acc[2]
+    avg_acc_util[3] = accuracy_utility(avg_acc[3], 1, 2)
 
     fig, ax1 = plt.subplots(figsize=(10, 6))
     # create axis labels
-    ax1.set_xlabel('Training Methods', fontsize=13)
-    ax1.set_ylabel('Average Device Accuracy', color='tab:red', fontsize=13)
-    ax1.set_ylim([0.5, 0.75])
-    ax1.bar(0, avg_acc_fed[0], width, color='tab:red')
-    ax1.bar(1, avg_acc_fed[1], width, color='tab:red', hatch='//')
-    ax1.bar(2, avg_acc_fed[2], width, color='tab:red', hatch='o')
-    ax1.tick_params(axis='y', labelcolor='tab:red')
+    # ax1.set_xlabel('Training Methods', fontsize=13)
+    ax1.set_ylabel('Average Device Utility via Accuracy', fontsize=18, weight='bold')
+    # ax1.set_yscale('log')
+    # ax1.set_ylim([0.5, 0.75])
+    ax1.bar(0, avg_acc_util[0], width, color='tab:red')
+    ax1.bar(1, avg_acc_util[1], width, color='tab:red')
+    ax1.bar(2, avg_acc_util[2], width, color='tab:green')
+    ax1.bar(3, avg_acc_util[3], width, color='tab:blue')
+    ax1.grid(axis='y', alpha=0.25)
+    plt.xticks(np.arange(num_baselines), x, weight='bold', fontsize=18)
 
-    # Adding Twin Axes
-    ax2 = ax1.twinx()
-    ax2.bar(0 + width, costs[0], width, color='tab:blue')
-    ax2.bar(1 + width, costs[1], width, color='tab:blue', hatch='//')
-    ax2.bar(2 + width, costs[2], width, color='tab:blue', hatch='o')
-    ax2.set_yscale("log")
-    ax2.set_ylabel('Maximum Allowable Marginal Cost', color='tab:blue', fontsize=13)
-    ax2.tick_params(axis='y', labelcolor='tab:blue')
+    # max_u = 350000
+    max_u = np.max(avg_acc_util) * 1.2
+    ax1.set_ylim([0, max_u])
 
-    plt.xticks(np.arange(num_baselines) + width / 2, x)
+    local_h = (np.max(avg_acc_util[:2]) / max_u) + 0.02
+    linear_h = (avg_acc_util[2] / max_u) + 0.02
+    nonlinear_h = (avg_acc_util[3] / max_u) + 0.02
+    # local_h = 0.68
+    # linear_h = 0.06
+    # nonlinear_h = 0.84
+
+    ax1.annotate('Non-Linear RealFM', xy=(0.89, nonlinear_h), xytext=(0.89, nonlinear_h + 0.05),
+                 xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:blue',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=3, lengthB=1', lw=2.0, color='k'))
+
+    ax1.annotate('Linear RealFM', xy=(0.63, linear_h), xytext=(0.63, linear_h + 0.05), xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:green',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=3, lengthB=1', lw=2.0, color='k'))
+
+    ax1.annotate('Linear & Non-Linear\n Local Training', xy=(0.235, local_h), xytext=(0.235, local_h + 0.05),
+                 xycoords='axes fraction',
+                 fontsize=18, ha='center', va='bottom', weight='bold', color='tab:red',
+                 bbox=dict(boxstyle='square', fc='white', color='k'),
+                 arrowprops=dict(arrowstyle='-[, widthB=7.25, lengthB=1', lw=2.0, color='k'))
+    # ax1.set_ylim([0, 14.3])
+    plt.tight_layout()
+    ax1.tick_params(axis='y', which='major', labelsize=16)
+
     # plt.show()
-    plt.savefig('realfm-device-comparison-8.png', dpi=200)
-    '''
-
-    # scatter plot idea
-    '''
-    plt.figure()
-
-    # plot our federated mechanism (all with same uniform costs)
-    for i in range(15):
-        avg_data = np.average(local_b[i, :])
-        total_fed = np.sum(fed_b[i, :])
-        avg_data_fed = np.average(fed_b[i, :])
-
-        # local baseline
-        acc_local = accuracy(avg_data, a_opt, k)
-        proj_utility_local = accuracy_utility(acc_local, 1, 2)
-
-        # our mechanism baseline
-        acc_fed = accuracy(total_fed, a_opt, k)
-        proj_utility_fed = accuracy_utility(acc_fed, 1, 2)
-
-        if i // 3 == 0:
-            col = 'b'
-            lab = 'RealFM (Uniform)'
-            mark = 'o'
-        elif i // 3 == 1:
-            col = 'k'
-            lab = 'RealFM (Non-Uniform Payoff and Cost)'
-            mark = 'P'
-        elif i // 3 == 2:
-            col = 'g'
-            lab = 'RealFM (Non-Uniform Cost)'
-            mark = '*'
-        elif i // 3 == 3:
-            col = 'tab:purple'
-            lab = 'Linear RealFM (Uniform)'
-            mark = 'o'
-        else:
-            col = 'tab:orange'
-            lab = 'Linear RealFM (Non-Uniform Cost)'
-            mark = '*'
-
-        # plot baselines
-        plt.scatter(avg_data, proj_utility_local, color='r', marker='x', label='Local Training' if (i+1) == 3 else "",
-                    s=100)
-        plt.scatter(avg_data_fed, proj_utility_fed, color=col, marker=mark, label=lab if (i+1) % 3 == 0 else "", s=100)
-
-    plt.ylabel('Server Utility', fontsize=13)
-    plt.xlabel('Average Gradient Contributions Across Devices', fontsize=13)
-    plt.grid(which="both", alpha=0.25)
-    plt.legend(loc='lower right')
-    # plt.xlim([5000, 13000])
-    # plt.ylim([5, 33])
-    plt.show()
-    # plt.savefig('realfm-server-u.png', dpi=200)
+    title = 'realfm-device-utility-' + str(nw) + 'device.png'
+    plt.savefig(title, dpi=200)
     '''
