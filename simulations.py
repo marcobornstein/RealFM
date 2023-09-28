@@ -57,8 +57,8 @@ def optimal_data_plot(x_init, k_vals, costs, savefig=True):
 
     plt.yscale('log')
     plt.xscale('log')
-    plt.xlabel('Marginal Cost')
-    plt.ylabel('Update Contribution ($b_i$)')
+    plt.xlabel('Marginal Cost', fontsize=18, weight='bold')
+    plt.ylabel('Data Contribution ($m_i$)', fontsize=18, weight='bold')
     plt.grid()
     # plt.ylim([100, 1e10])
 
@@ -69,7 +69,9 @@ def optimal_data_plot(x_init, k_vals, costs, savefig=True):
     order = [0, 2, 4, 1, 3, 5]
 
     # add legend to plot
-    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order])
+    plt.legend([handles[idx] for idx in order], [labels[idx] for idx in order], fontsize=12)
+    plt.tick_params(axis='both', which='major', labelsize=16)
+    plt.tight_layout()
 
     if savefig:
         plt.savefig('marginal-cost-comparison.pdf')
@@ -86,11 +88,13 @@ def utility_plots(cost, k=1, savefig=True):
     plt.plot(x, u_old, label='Linear $\phi_i$')
     plt.yscale('symlog')
     plt.xscale('log')
-    plt.ylabel('Utility')
+    plt.ylabel('Utility', fontsize=18, weight='bold')
     # plt.xlabel('Data Contribution')
-    plt.xlabel('Update Contribution ($b_i$)')
-    plt.legend(loc='lower left')
+    plt.xlabel('Data Contribution ($m_i$)', fontsize=18, weight='bold')
+    plt.legend(loc='lower left', fontsize=18)
     plt.grid()
+    plt.tick_params(axis='both', which='major', labelsize=16)
+    plt.tight_layout()
     if savefig:
         title = 'utility-comparison-' + str(cost) + '.pdf'
         plt.savefig(title)
@@ -104,8 +108,8 @@ if __name__ == '__main__':
     k_vals = [1, 10, 100]
     x_init = np.array(1e4)
 
-    # optimal_data_plot(x_init, k_vals, costs, savefig=True)
-    utility_plots(0.01, savefig=True)
+    optimal_data_plot(x_init, k_vals, costs, savefig=True)
+    # utility_plots(0.0001, savefig=True)
 
 
 

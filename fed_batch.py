@@ -1,6 +1,6 @@
 import torch
 from utils.federated_communication import Communicator
-from utils.data_loading import load_cifar10
+from utils.data_loading import load_cifar10, load_mnist
 from utils.equilibrium import optimal_data_local, optimal_data_fed
 from train_test import local_training, federated_training, federated_training_nonuniform
 from mpi4py import MPI
@@ -8,6 +8,7 @@ import numpy as np
 import torchvision.models as models
 from config import configs
 from utils.recorder import Recorder
+from utils.custom_models import MNIST
 import copy
 
 # split data up amongst 16 devices, then show how well a centralized model performs using 1-16
@@ -17,7 +18,7 @@ import copy
 if __name__ == '__main__':
 
     # determine config
-    dataset = 'cifar10'
+    dataset = 'mnist'
     config = configs[dataset]
 
     # determine hyper-parameters
@@ -31,6 +32,10 @@ if __name__ == '__main__':
     local_steps = config['local_steps']
     uniform_payoff = config['uniform_payoff']
     uniform_cost = config['uniform_cost']
+    linear_utility = config['linear_utility']
+    a_opt = config['a_opt']
+    k = config['k']
+    simple_acc = config['simple_acc']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
@@ -62,15 +67,15 @@ if __name__ == '__main__':
     if uniform_payoff:
         c = 1
     else:
-        low = 1
-        high = 2
+        low = 0.9
+        high = 1.1
         avg = (high+low)/2
         c = np.random.uniform(low, high)
 
     if uniform_cost:
         marginal_cost = marginal_cost
     else:
-        marginal_cost = np.random.normal(marginal_cost, 0.1*marginal_cost)
+        marginal_cost = np.random.normal(marginal_cost, 0.05*marginal_cost)
 
     if uniform_payoff and uniform_cost:
         nu = False
@@ -78,14 +83,12 @@ if __name__ == '__main__':
         nu = True
 
     # keep note of the constant used
+    recorder.save_payoff_c(marginal_cost)
     recorder.save_payoff_c(c)
 
     # determine local data contributions
-    # create different payoff functions as well (might multiply by a constant out front of the payoff function)
-    # marginal_cost = np.random.uniform(9e-3, 0.0099)
-    # marginal_cost = 5e-3
-    # marginal_cost = 1e-3
-    b_local = optimal_data_local(marginal_cost, c=c)
+    b_local, u_local = optimal_data_local(marginal_cost, c=c, k=k, a_opt=a_opt, linear=linear_utility,
+                                          simple_acc=simple_acc)
 
     print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
 
@@ -98,10 +101,17 @@ if __name__ == '__main__':
     FLC.self_weight = self_weight
 
     # load CIFAR10 data
-    trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
+    if dataset == 'cifar10':
+        trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
+        model = models.resnet18()
+    elif dataset == 'mnist':
+        trainloader, testloader = load_mnist(device_num_data, rank, train_batch_size, test_batch_size)
+        model = MNIST()
+    else:
+        print('ERROR: Dataset Provided Is Not Valid.')
+        exit()
 
     # use ResNet18
-    model = models.resnet18()
     criterion = torch.nn.CrossEntropyLoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -128,8 +138,6 @@ if __name__ == '__main__':
     MPI.COMM_WORLD.Barrier()
 
     # reset model to the initial model
-    # model = models.resnet18()
-    # model.load_state_dict(torch.load('initial_weights.pth'))
     model = torch.load(model_path)
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     model.to(device)
@@ -142,7 +150,13 @@ if __name__ == '__main__':
         a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs,
                                    log_frequency, recorder, local_steps=local_steps)
     else:
-        b_local_uniform = optimal_data_local(og_marginal_cost, c=avg)
+        if uniform_payoff:
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, a_opt=a_opt, linear=linear_utility,
+                                                    simple_acc=simple_acc)
+        else:
+            b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, a_opt=a_opt, linear=linear_utility,
+                                                    simple_acc=simple_acc)
+
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
                                               steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
@@ -150,8 +164,9 @@ if __name__ == '__main__':
     MPI.COMM_WORLD.Barrier()
 
     # compute the optimal contributions that would've maximized utility
-    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c)
+    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c, linear=linear_utility)
 
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
     recorder.save_data_contributions(b_local, b_fed)
+    # recorder.save_data_contributions(u_local, u_fed)
