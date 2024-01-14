@@ -36,6 +36,8 @@ if __name__ == '__main__':
     a_opt = config['a_opt']
     k = config['k']
     simple_acc = config['simple_acc']
+    non_iid = config['non_iid']
+    alpha = config['dirichlet_value']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
@@ -102,10 +104,12 @@ if __name__ == '__main__':
 
     # load CIFAR10 data
     if dataset == 'cifar10':
-        trainloader, testloader = load_cifar10(device_num_data, rank, train_batch_size, test_batch_size)
+        trainloader, testloader = load_cifar10(device_num_data, rank, size, train_batch_size, test_batch_size, non_iid,
+                                               alpha)
         model = models.resnet18()
     elif dataset == 'mnist':
-        trainloader, testloader = load_mnist(device_num_data, rank, train_batch_size, test_batch_size)
+        trainloader, testloader = load_mnist(device_num_data, rank, size, train_batch_size, test_batch_size, non_iid,
+                                             alpha)
         model = MNIST()
     else:
         print('ERROR: Dataset Provided Is Not Valid.')

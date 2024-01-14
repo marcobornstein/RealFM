@@ -3,7 +3,8 @@ Repository for RealFM.
 
 The code can be run with differing parameters by adjusting the config.py script.
 
-Running the code (in serial) consists of calling: python3 realfm.py.
+Running the code (in serial) consists of calling: python realfm.py.
+Running the code (in parallel) consists of calling: mpirun -n 16 python realfm.py
 
 Packages Used:
 

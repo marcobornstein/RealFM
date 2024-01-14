@@ -54,18 +54,18 @@ def plot_ci(x, y, num_runs, num_dots, mylegend, ls='-', lw=3, transparency=0.2):
 
 if __name__ == '__main__':
     colors = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    nw = 16
-    epochs = 50
+    nw = 8
+    epochs = 100
     fed_accs = []
     local_accs = []
     iters = np.arange(1, epochs + 1)
     each_dev_local_a = []
 
     # strictly accuracy plots
-    '''
+    # '''
     for trial in range(1, 4):
-        # file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
-        file = 'output/MNIST/realfm-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
+        file = 'output/Cifar10/realfm-uniform-run' + str(trial) + '-cifar10-' + str(nw) + 'devices'
+        # file = 'output/MNIST/realfm-uniform-run' + str(trial) + '-mnist-' + str(nw) + 'devices'
         fed_test_acc = unpack_data(file, epochs, nw)
         local_test_acc = unpack_data(file, epochs, nw, datatype='local-epoch-acc-top1.log')
         fed_accs.append(fed_test_acc[:, 0])
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     y_mean, y_min, y_max = generate_confidence_interval(fed_accs)
     y_mean_local, y_min_local, y_max_local = generate_confidence_interval(local_accs)
 
-    plt.figure()
+    plt.figure(figsize=(8, 6))
 
     # plot federated results
     plt.plot(iters, y_mean, label='Federated Training', color='b')
@@ -89,8 +89,8 @@ if __name__ == '__main__':
     plt.plot(iters, y_mean_local, label='Average Local Training', color='r')
     plt.fill_between(iters, y_min_local, y_max_local, alpha=0.2, color='r')
 
-    title = 'Federated Training vs. Average Local Training for CIFAR-10'
-    plt.title(title)
+    # title = 'Federated Training vs. Average Local Training for CIFAR-10'
+    # plt.title(title)
     plt.legend(loc='lower right')
     plt.ylabel('Test Accuracy', fontsize=13)
     plt.xlabel('Epochs', fontsize=13)
@@ -99,9 +99,10 @@ if __name__ == '__main__':
     # plt.ylim([0.225, 0.48])
     plt.grid(which="both", alpha=0.25)
     # plt.show()
-    savefilename = str(nw) + 'device-mnist.png'
+    savefilename = 'accuracy-comp-' + str(nw) + 'device-cifar10.png'
+    # plt.tight_layout()
     plt.savefig(savefilename, dpi=200)
-    '''
+    # '''
 
     # =======================================================
     # plot data contribution plot and bar chart
@@ -192,7 +193,7 @@ if __name__ == '__main__':
     # SERVER BAR CHART
     # both 1) average gradient contributions across devices and 2) server utility
 
-    # '''
+    '''
 
     # x = ['Uniform\n (L Payoff)', 'Uniform\n (NL Payoff)', 'N-Uniform\n Cost', 'Uniform',
     #      'N-Uniform  \n Payoff & Cost', 'N-Uniform\n Cost', 'Uniform']
@@ -328,7 +329,7 @@ if __name__ == '__main__':
     # plt.show()
     title = 'realfm-server-data-produced-' + str(nw) + 'devices-mnist.png'
     plt.savefig(title, dpi=200)
-    # '''
+    '''
 
     # CLIENT BAR CHART
     # do the same but plot device accuracy and device utility
