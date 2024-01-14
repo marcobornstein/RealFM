@@ -1,24 +1,27 @@
 import torch
+import numpy as np
+import torchvision.models as models
+import copy
+import argparse
+from config import configs
+from mpi4py import MPI
 from utils.federated_communication import Communicator
 from utils.data_loading import load_cifar10, load_mnist
 from utils.equilibrium import optimal_data_local, optimal_data_fed
 from train_test import local_training, federated_training, federated_training_nonuniform
-from mpi4py import MPI
-import numpy as np
-import torchvision.models as models
-from config import configs
 from utils.recorder import Recorder
 from utils.custom_models import MNIST
-import copy
-
-# split data up amongst 16 devices, then show how well a centralized model performs using 1-16
-# averaged batches per update
 
 
 if __name__ == '__main__':
 
+    # parse dataset from command line
+    parser = argparse.ArgumentParser(description='RealFM Dataset Parser')
+    parser.add_argument('--dataset', type=str, default='mnist')
+    args = parser.parse_args()
+
     # determine config
-    dataset = 'mnist'
+    dataset = args.dataset
     config = configs[dataset]
 
     # determine hyper-parameters
