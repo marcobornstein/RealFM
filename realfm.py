@@ -169,6 +169,7 @@ if __name__ == '__main__':
             b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, a_opt=a_opt, linear=linear_utility,
                                                     simple_acc=simple_acc)
 
+        # need uniform number of steps to ensure no deadlock, use the expected (uniform) local data points
         b_local_uniform = data_mapping(b_local_uniform, max_data_per_device)
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
