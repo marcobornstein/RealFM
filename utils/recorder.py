@@ -111,8 +111,9 @@ class Recorder(object):
             np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-fed-train-acc-top1.log',
                        self.record_training_acc_f, delimiter=',')
 
-    def save_data_contributions(self, b_local, b_fed):
+    def save_data_contributions(self, b_local, b_local_mapped, b_fed):
         self.update_contribution.append(b_local)
+        self.update_contribution.append(b_local_mapped)
         self.update_contribution.append(b_fed)
         np.savetxt(self.saveFolderName + '/r' + str(self.rank) + '-update-contribution.log', self.update_contribution,
                    delimiter=',')

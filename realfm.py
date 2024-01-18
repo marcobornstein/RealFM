@@ -7,7 +7,7 @@ from config import configs
 from mpi4py import MPI
 from utils.federated_communication import Communicator
 from utils.data_loading import load_cifar10, load_mnist
-from utils.equilibrium import optimal_data_local, optimal_data_fed
+from utils.equilibrium import optimal_data_local, optimal_data_fed, data_mapping
 from train_test import local_training, federated_training, federated_training_nonuniform
 from utils.recorder import Recorder
 from utils.custom_models import MNIST
@@ -41,6 +41,7 @@ if __name__ == '__main__':
     simple_acc = config['simple_acc']
     non_iid = config['non_iid']
     alpha = config['dirichlet_value']
+    num_data = config['num_train_data']
     og_marginal_cost = copy.deepcopy(marginal_cost)
 
     # initialize MPI
@@ -95,14 +96,18 @@ if __name__ == '__main__':
     b_local, u_local = optimal_data_local(marginal_cost, c=c, k=k, a_opt=a_opt, linear=linear_utility,
                                           simple_acc=simple_acc)
 
-    print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local, marginal_cost, c))
+    # map data down to boun
+    max_data_per_device = num_data / size
+    b_local_mapped = data_mapping(b_local, max_data_per_device)
+
+    print('rank: %d, local optimal data: %d, marginal cost %f, payoff constant %f' % (rank, b_local_mapped, marginal_cost, c))
 
     # in order to partition data without overlap, share the amount of data each device will use
     device_num_data = np.empty(size, dtype=np.int32)
-    comm.Allgather(np.array([b_local], dtype=np.int32), device_num_data)
+    comm.Allgather(np.array([b_local_mapped], dtype=np.int32), device_num_data)
 
     # determine self weight
-    self_weight = b_local / np.sum(device_num_data)
+    self_weight = b_local_mapped / np.sum(device_num_data)
     FLC.self_weight = self_weight
 
     # load CIFAR10 data
@@ -139,8 +144,8 @@ if __name__ == '__main__':
     if rank == 0:
         print('Beginning Local Training...')
 
-    a_local = local_training(model, trainloader, testloader, device, criterion, optimizer, epochs, log_frequency,
-                             recorder)
+    a_local = local_training(model, trainloader, testloader, device, criterion, optimizer,
+                             epochs, log_frequency, recorder)
 
     MPI.COMM_WORLD.Barrier()
 
@@ -164,6 +169,7 @@ if __name__ == '__main__':
             b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=avg, k=k, a_opt=a_opt, linear=linear_utility,
                                                     simple_acc=simple_acc)
 
+        b_local_uniform = data_mapping(b_local_uniform, max_data_per_device)
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
                                               steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
@@ -171,9 +177,9 @@ if __name__ == '__main__':
     MPI.COMM_WORLD.Barrier()
 
     # compute the optimal contributions that would've maximized utility
-    b_fed = optimal_data_fed(a_local, a_fed, b_local, marginal_cost, c=c, linear=linear_utility)
+    b_fed = optimal_data_fed(a_local, a_fed, b_local_mapped, marginal_cost, c=c, linear=linear_utility)
 
     # print and store optimal amount of data
-    print(f' [rank {rank}] initial local optimal data: {b_local}, federated mechanism optimal data: {b_fed}')
-    recorder.save_data_contributions(b_local, b_fed)
+    print(f' [rank {rank}] initial local optimal data: {b_local_mapped}, federated mechanism optimal data: {b_fed}')
+    recorder.save_data_contributions(b_local, b_local_mapped, b_fed)
     # recorder.save_data_contributions(u_local, u_fed)
