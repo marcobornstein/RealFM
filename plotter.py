@@ -62,20 +62,22 @@ class RealFMPlotter:
 
         if dataset == 'mnist':
             if self.non_iid:
-                self.file_start = 'output/MNIST-noniid/D-' + str(self.dirichlet_value) + '/realfm-'
+                self.file_start = 'output/MNIST/' + str(self.num_workers) + 'dev/noniid/D-' \
+                                  + str(self.dirichlet_value) + '/realfm-'
                 self.file_end = '-mnist-' + str(self.num_workers) + 'devices-noniid'
             else:
-                self.file_start = 'output/MNIST/realfm-'
+                self.file_start = 'output/MNIST/' + str(self.num_workers) + 'dev/iid/' + 'realfm-'
                 self.file_end = '-mnist-' + str(self.num_workers) + 'devices'
             self.epochs = 50
             self.a_opt = 0.995
             self.k = 0.25
         elif dataset == 'cifar10':
             if self.non_iid:
-                self.file_start = 'output/Cifar10-noniid/D-' + str(self.dirichlet_value) + '/realfm-'
+                self.file_start = 'output/Cifar10/' + str(self.num_workers) + 'dev/noniid/D-' \
+                                  + str(self.dirichlet_value) + '/realfm-'
                 self.file_end = '-cifar10-' + str(self.num_workers) + 'devices-noniid'
             else:
-                self.file_start = 'output/Cifar10/realfm-'
+                self.file_start = 'output/Cifar10/' + str(self.num_workers) + 'dev/iid/' + 'realfm-'
                 self.file_end = '-cifar10-' + str(self.num_workers) + 'devices'
             self.epochs = 100
             self.a_opt = 0.9
@@ -118,39 +120,39 @@ class RealFMPlotter:
 
         for trial in range(1, 4):
             file = self.file_start + self.experiments[0] + '-run' + str(trial) + self.file_end
-            optimal_data = unpack_data(file, 4, self.num_workers, datatype='update-contribution.log')
+            optimal_data = unpack_data(file, 5, self.num_workers, datatype='update-contribution.log')
             self.mc[trial - 1, :] = optimal_data[0, :]
             self.payoff[trial - 1, :] = optimal_data[1, :]
-            self.local_b[trial - 1, :] = optimal_data[2, :]
-            self.fed_b[trial - 1, :] = optimal_data[3, :]
+            self.local_b[trial - 1, :] = optimal_data[3, :]
+            self.fed_b[trial - 1, :] = optimal_data[4, :]
 
             file = self.file_start + self.experiments[1] + '-run' + str(trial) + self.file_end
-            optimal_data = unpack_data(file, 4, self.num_workers, datatype='update-contribution.log')
+            optimal_data = unpack_data(file, 5, self.num_workers, datatype='update-contribution.log')
             self.mc[trial + 2, :] = optimal_data[0, :]
             self.payoff[trial + 2, :] = optimal_data[1, :]
-            self.local_b[trial + 2, :] = optimal_data[2, :]
-            self.fed_b[trial + 2, :] = optimal_data[3, :]
+            self.local_b[trial + 2, :] = optimal_data[3, :]
+            self.fed_b[trial + 2, :] = optimal_data[4, :]
 
             file = self.file_start + self.experiments[2] + '-run' + str(trial) + self.file_end
-            optimal_data = unpack_data(file, 4, self.num_workers, datatype='update-contribution.log')
+            optimal_data = unpack_data(file, 5, self.num_workers, datatype='update-contribution.log')
             self.mc[trial + 5, :] = optimal_data[0, :]
             self.payoff[trial + 5, :] = optimal_data[1, :]
-            self.local_b[trial + 5, :] = optimal_data[2, :]
-            self.fed_b[trial + 5, :] = optimal_data[3, :]
+            self.local_b[trial + 5, :] = optimal_data[3, :]
+            self.fed_b[trial + 5, :] = optimal_data[4, :]
 
             file = self.file_start + self.experiments[3] + '-run' + str(trial) + self.file_end
-            optimal_data = unpack_data(file, 4, self.num_workers, datatype='update-contribution.log')
+            optimal_data = unpack_data(file, 5, self.num_workers, datatype='update-contribution.log')
             self.mc[trial + 8, :] = optimal_data[0, :]
             self.payoff[trial + 8, :] = optimal_data[1, :]
-            self.local_b[trial + 8, :] = optimal_data[2, :]
-            self.fed_b[trial + 8, :] = optimal_data[3, :]
+            self.local_b[trial + 8, :] = optimal_data[3, :]
+            self.fed_b[trial + 8, :] = optimal_data[4, :]
 
             file = self.file_start + self.experiments[4] + '-run' + str(trial) + self.file_end
-            optimal_data = unpack_data(file, 4, self.num_workers, datatype='update-contribution.log')
+            optimal_data = unpack_data(file, 5, self.num_workers, datatype='update-contribution.log')
             self.mc[trial + 11, :] = optimal_data[0, :]
             self.payoff[trial + 11, :] = optimal_data[1, :]
-            self.local_b[trial + 11, :] = optimal_data[2, :]
-            self.fed_b[trial + 11, :] = optimal_data[3, :]
+            self.local_b[trial + 11, :] = optimal_data[3, :]
+            self.fed_b[trial + 11, :] = optimal_data[4, :]
 
     def test_accuracy_plot(self, save_figure):
 
@@ -352,6 +354,7 @@ class RealFMPlotter:
         ax2.bar(linear_ind, avg_data_fed[2:4], width, color='tab:green')
         ax2.bar(nonlinear_ind, avg_data_fed[4:], width, color='tab:blue')
         ax2.grid(axis='y', alpha=0.25)
+        ax2.set_yscale('log')
 
         plt.xticks(np.arange(num_baselines), x, weight='bold', fontsize=15)
 
@@ -361,109 +364,13 @@ class RealFMPlotter:
             offsets = [0.01, 0.02, 0.01]
 
         max_u = np.max(avg_data_fed) * 1.15
+        val = np.log(max_u)
+        log_avg_data_fed = np.log(avg_data_fed)
         ax2.set_ylim([0, max_u])
 
-        nonlinear_h = (np.max(avg_data_fed[4:]) / max_u) + offsets[0]
-        linear_h = (np.max(avg_data_fed[2:4]) / max_u) + offsets[1]
-        local_h = (np.max(avg_data_fed[:2]) / max_u) + offsets[2]
-
-        ax2.annotate('Non-Linear RealFM', xy=(0.781, nonlinear_h), xytext=(0.781, nonlinear_h + 0.05),
-                     xycoords='axes fraction',
-                     fontsize=18, ha='center', va='bottom', weight='bold', color='tab:blue',
-                     bbox=dict(boxstyle='square', fc='white', color='k'),
-                     arrowprops=dict(arrowstyle='-[, widthB=6.5, lengthB=1', lw=2.0, color='k'))
-
-        ax2.annotate('Linear RealFM', xy=(0.4275, linear_h), xytext=(0.4275, linear_h + 0.05), xycoords='axes fraction',
-                     fontsize=18, ha='center', va='bottom', weight='bold', color='tab:green',
-                     bbox=dict(boxstyle='square', fc='white', color='k'),
-                     arrowprops=dict(arrowstyle='-[, widthB=4.0, lengthB=0.75', lw=2.0, color='k'))
-
-        ax2.annotate('Linear & Non-Linear\n Local Training', xy=(0.14, local_h), xytext=(0.14, local_h + 0.05),
-                     xycoords='axes fraction',
-                     fontsize=18, ha='center', va='bottom', weight='bold', color='tab:red',
-                     bbox=dict(boxstyle='square', fc='white', color='k'),
-                     arrowprops=dict(arrowstyle='-[, widthB=4.25, lengthB=1', lw=2.0, color='k'))
-
-        ax2.yaxis.tick_right()
-        ax2.yaxis.set_label_position("right")
-        ax2.tick_params(axis='y', which='major', labelsize=16)
-        plt.tight_layout()
-
-        if save_figure:
-            title = 'realfm-server-data-produced-' + str(self.num_workers) + 'devices-' + self.dataset + '.png'
-            plt.savefig(title, dpi=200)
-        else:
-            plt.show()
-
-    def device_contribution_comparison2(self, save_figure, trials=3):
-
-        x = ['U-LP', 'U-NLP', 'NU-C', 'U-LP', 'NU-PC', 'NU-C', 'U-NLP']
-
-        # local baseline (expected)
-        expected_local_b = None
-        if self.num_workers == 16:
-            expected_local_b = 3000
-        elif self.num_workers == 8:
-            expected_local_b = 5500
-
-        num_baselines = len(x)
-        avg_data_fed = np.empty(num_baselines)
-        avg_data_fed[:2] = expected_local_b
-
-        local_ind = np.arange(2)
-        linear_ind = np.arange(2, 4)
-        nonlinear_ind = np.arange(4, 7)
-
-        # for nonuniformC, use average of the costs or just use each one for each device
-        linear_uniform_mc = self.mc[3, 0]
-        # linear_uniform_mc = self.mc[3, :]
-        # linear_nonuniform_mc = self.mc[:3, :]
-
-
-        avg_local_a = np.zeros(self.num_workers)
-        avg_fed_a = 0
-        for trial in range(1, trials+1):
-            file = self.file_start + 'uniform-run' + str(trial) + self.file_end
-
-            # get local acc
-            optimal_data = unpack_data(file, self.epochs, self.num_workers, datatype='local-epoch-acc-top1.log')
-            avg_local_a += optimal_data[-1, :] / trials
-
-            # get fed acc
-            optimal_data = unpack_data(file, self.epochs, self.num_workers, datatype='fed-epoch-acc-top1.log')
-            avg_fed_a += optimal_data[-1, 0] / trials
-
-        for local_a in avg_local_a:
-            b_fed = optimal_data_fed(local_a, avg_fed_a, expected_local_b, linear_uniform_mc, c=1, linear=False)
-            print(b_fed)
-
-        exit()
-
-        for i in range(num_baselines - 2):
-            total_fed = np.average(self.fed_b[trials * i:(trials * (i + 1)), :], axis=1)
-            avg_data_fed[i + 2] = np.average(total_fed)
-
-        width = 0.45
-        fig2, ax2 = plt.subplots(figsize=(10, 6))
-        ax2.set_ylabel('Average Device Data Contribution', fontsize=18, weight='bold')
-        ax2.bar(local_ind, avg_data_fed[:2], width, color='tab:red')
-        ax2.bar(linear_ind, avg_data_fed[2:4], width, color='tab:green')
-        ax2.bar(nonlinear_ind, avg_data_fed[4:], width, color='tab:blue')
-        ax2.grid(axis='y', alpha=0.25)
-
-        plt.xticks(np.arange(num_baselines), x, weight='bold', fontsize=15)
-
-        if self.dataset == 'mnist':
-            offsets = [0.01, 0.05, 0.01]
-        else:
-            offsets = [0.01, 0.02, 0.01]
-
-        max_u = np.max(avg_data_fed) * 1.15
-        ax2.set_ylim([0, max_u])
-
-        nonlinear_h = (np.max(avg_data_fed[4:]) / max_u) + offsets[0]
-        linear_h = (np.max(avg_data_fed[2:4]) / max_u) + offsets[1]
-        local_h = (np.max(avg_data_fed[:2]) / max_u) + offsets[2]
+        local_h = (np.max(log_avg_data_fed[:2]) / val) + offsets[0]
+        linear_h = (np.max(log_avg_data_fed[2:4]) / val) + offsets[1]
+        nonlinear_h = (np.max(log_avg_data_fed[4:]) / val) + offsets[2]
 
         ax2.annotate('Non-Linear RealFM', xy=(0.781, nonlinear_h), xytext=(0.781, nonlinear_h + 0.05),
                      xycoords='axes fraction',
