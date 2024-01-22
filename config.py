@@ -6,10 +6,12 @@ configs = {
         'a_opt': 0.9,
         'marginal_cost': 2.5e-4,
         'local_steps': 6,
-        'random_seed': 1948,
+        'simple_acc': False,
+        'random_seed': 1,
         'test_frequency': 500,
         'log_frequency': 60,
         'test_batches': 30,
+        'num_train_data': 50000,
         'epochs': 100,
         'k': 18,
         'file_path': 'output',
@@ -18,8 +20,6 @@ configs = {
         'uniform_payoff': True,
         'uniform_cost': True,
         'linear_utility': False,
-        'simple_acc': False,
-        'num_train_data': 50000,
         'name': 'realfm-uniform-run1'
     },
 
@@ -27,14 +27,15 @@ configs = {
             'train_bs': 128,
             'test_bs': 1024,
             'lr': 1e-3,
-            'a_opt': 0.995,
-            'marginal_cost': 1e-4,
+            'a_opt': 0.9975,
+            'simple_acc': True,
+            'marginal_cost': 4e-5,
             'local_steps': 6,
-            'random_seed': 1948,
+            'random_seed': 1,
             'log_frequency': 30,
             'test_batches': 30,
-            'epochs': 50,
-            'simple_acc': True,
+            'num_train_data': 60000,
+            'epochs': 100,
             'k': 0.25,
             'file_path': 'output',
             'non_iid': True,
@@ -42,8 +43,7 @@ configs = {
             'uniform_payoff': True,
             'uniform_cost': True,
             'linear_utility': True,
-            'num_train_data': 60000,
-            'name': 'realfm-nonuniformPC-run1'
+            'name': 'realfm-linear-uniform-noniid-run1'
         }
 }
 # New Experiments

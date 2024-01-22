@@ -78,5 +78,5 @@ def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, linear=False):
     return num_data
 
 
-def data_mapping(b, data_per_device, k=0.0001):
+def data_mapping(b, data_per_device, k=0.0002):
     return int(data_per_device * (1 - np.exp(-k * b)))
