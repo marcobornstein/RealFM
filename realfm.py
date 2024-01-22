@@ -18,6 +18,8 @@ if __name__ == '__main__':
     # parse dataset from command line
     parser = argparse.ArgumentParser(description='RealFM Dataset Parser')
     parser.add_argument('--dataset', type=str, default='mnist')
+    parser.add_argument('--name', type=str, default='none')
+    parser.add_argument('--seed', type=int, default=-1)
     args = parser.parse_args()
 
     # determine config
@@ -25,7 +27,6 @@ if __name__ == '__main__':
     config = configs[dataset]
 
     # determine hyper-parameters
-    seed = config['random_seed']
     train_batch_size = config['train_bs']
     test_batch_size = config['test_bs']
     learning_rate = config['lr']
@@ -43,6 +44,14 @@ if __name__ == '__main__':
     alpha = config['dirichlet_value']
     num_data = config['num_train_data']
     og_marginal_cost = copy.deepcopy(marginal_cost)
+    if args.seed == -1:
+        seed = config['random_seed']
+    else:
+        seed = args.seed
+    if args.name == 'none':
+        name = config['name']
+    else:
+        name = args.name
 
     # initialize MPI
     comm = MPI.COMM_WORLD
@@ -68,7 +77,7 @@ if __name__ == '__main__':
     FLC = Communicator(rank, size, comm, device)
 
     # initialize recorder
-    recorder = Recorder(rank, size, config, dataset)
+    recorder = Recorder(rank, size, config, name, dataset)
 
     if uniform_payoff:
         c = 1

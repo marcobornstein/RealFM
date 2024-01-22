@@ -10,7 +10,7 @@ def date_string(date):
 
 
 class Recorder(object):
-    def __init__(self, rank, size, config, dataset):
+    def __init__(self, rank, size, config, name, dataset):
         self.rank = rank
         self.size = size
 
@@ -31,7 +31,7 @@ class Recorder(object):
         # remaining
         self.record_test_acc = list()
         self.update_contribution = list()
-        self.saveFolderName = config['file_path'] + '/' + config['name'] + '-' + dataset + '-' + str(size) + 'devices'
+        self.saveFolderName = config['file_path'] + '/' + name + '-' + dataset + '-' + str(size) + 'devices'
 
         if rank == 0:
             if not os.path.isdir(self.saveFolderName):

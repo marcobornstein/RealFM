@@ -55,9 +55,9 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
 
         # spit out the final accuracy after training
         if epoch == epochs:
-            final_accuracy = test(model, testloader, device, recorder, return_acc=True)
+            final_accuracy = test(model, testloader, device, recorder, epoch, return_acc=True)
         else:
-            test(model, testloader, device, recorder)
+            test(model, testloader, device, recorder, epoch)
 
         MPI.COMM_WORLD.Barrier()
 
@@ -126,9 +126,9 @@ def federated_training(model, communicator, trainloader, testloader, device, los
         communicator.sync_models(model)
         if epoch == epochs:
             # ensure models are synced so that final test accuracies are all equivalent
-            final_accuracy = test(model, testloader, device, recorder, return_acc=True, local=False)
+            final_accuracy = test(model, testloader, device, recorder, epoch, return_acc=True, local=False)
         else:
-            test(model, testloader, device, recorder, local=False)
+            test(model, testloader, device, recorder, epoch, local=False)
 
         MPI.COMM_WORLD.Barrier()
 
@@ -195,15 +195,15 @@ def federated_training_nonuniform(model, communicator, trainloader, testloader, 
                 communicator.sync_models(model)
                 if i % total_steps == 0:
                     # spit out the final accuracy after training
-                    final_accuracy = test(model, testloader, device, recorder, return_acc=True, local=False)
+                    final_accuracy = test(model, testloader, device, recorder, epochs, return_acc=True, local=False)
                     return final_accuracy
                 else:
-                    test(model, testloader, device, recorder, local=False)
+                    test(model, testloader, device, recorder, i//steps_per_e, local=False)
 
             i += 1
 
 
-def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_acc=False, local=True):
+def test(model, test_dl, device, recorder, epoch_num, test_batches=30, epoch=True, return_acc=False, local=True):
     correct = 0
     total = 0
     i = 1
@@ -229,6 +229,9 @@ def test(model, test_dl, device, recorder, test_batches=30, epoch=True, return_a
 
     test_acc = correct / total
     recorder.add_test_accuracy(test_acc, epoch=epoch, local=local)
-    print(f'[rank {recorder.rank}] test accuracy on {total} images: {100 * test_acc: .3f}%')
+    if epoch:
+        print(f'[rank {recorder.rank}] epoch {epoch_num}, test accuracy on {total} images: {100 * test_acc: .3f}%')
+    else:
+        print(f'[rank {recorder.rank}] test accuracy on {total} images: {100 * test_acc: .3f}%')
     if return_acc:
         return test_acc
