@@ -149,8 +149,8 @@ class RealFMPlotter:
 
             # if accuracy shaping actually results in less data than local, use just local data since device
             # wouldn't partake in federated mechanism
-            p = all_device_fed_data - all_device_local_data
-            print(p[:3, :])
+            # p = all_device_fed_data - all_device_local_data
+            # print(p[:3, :])
             if total_fed_data_avg < total_local_data_avg:
                 print('not enough epochs to get fed acc large enough')
                 self.avg_acc_fed[i] = self.avg_acc_local[i]
@@ -173,13 +173,13 @@ class RealFMPlotter:
 
         x = ['Uniform', 'Non-Uniform C', 'Non-Uniform C&P']
 
-        linear_local_ind = np.array([0, 4, 8])
-        linear_fed_ind = linear_local_ind + 1
-        nonlinear_local_ind = linear_local_ind + 2
-        nonlinear_fed_ind = linear_local_ind + 3
-        tick_ind = np.array([1.5, 5.5, 9.5])
+        width = 0.75
+        linear_local_ind = np.array([0, 3.5, 7])
+        linear_fed_ind = linear_local_ind + width
+        nonlinear_local_ind = linear_local_ind + 2*width
+        nonlinear_fed_ind = linear_local_ind + 3*width
+        tick_ind = np.mean([linear_local_ind, linear_fed_ind, nonlinear_local_ind, nonlinear_fed_ind], axis=0)
 
-        width = 0.4
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
         # create axis labels
@@ -200,11 +200,15 @@ class RealFMPlotter:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
         ax1.tick_params(axis='y', which='major', labelsize=16)
-        plt.legend(fontsize=13)
+        plt.legend(fontsize=13, loc='upper left')
         plt.tight_layout()
 
         if save_figure:
-            title = 'realfm-average-device-utility-' + str(self.num_workers) + 'devices-' + self.dataset + '.png'
+            title = 'realfm-average-device-utility' + self.file_end
+            if self.non_iid:
+                title = title + str(self.dirichlet_value) + '.png'
+            else:
+                title = title + '.png'
             plt.savefig(title, dpi=200)
         else:
             plt.show()
@@ -213,11 +217,11 @@ class RealFMPlotter:
 
         x = ['Uniform', 'Non-Uniform C', 'Non-Uniform C&P']
 
-        linear_fed_ind = np.array([0, 2, 4])
-        nonlinear_fed_ind = linear_fed_ind + 1
-        tick_ind = np.array([0.5, 2.5, 4.5])
+        linear_fed_ind = np.array([0, 1.5, 3])
+        nonlinear_fed_ind = linear_fed_ind + 0.6
+        tick_ind = (linear_fed_ind + nonlinear_fed_ind) / 2
 
-        width = 0.4
+        width = 0.5
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
         # create axis labels
@@ -295,7 +299,7 @@ class RealFMPlotter:
         plt.legend(fontsize=13)
 
         if self.dataset == 'mnist':
-            plt.ylim([0, 2e8])
+            plt.ylim([0, 5e8])
         else:
             plt.ylim([0, 1e2])
 
@@ -400,14 +404,14 @@ class RealFMPlotter:
 
 if __name__ == '__main__':
     clr = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    num_w = 8
+    num_w = 16
     ds = 'mnist'
     non_iid = True
     dirichlet_value = 0.3
 
     plotter = RealFMPlotter(ds, num_w, clr, non_iid, dirichlet_value)
     # plotter.contribution_bar_chart(False)
-    plotter.device_contribution_comparison(False)
+    #plotter.device_contribution_comparison(False)
     # plotter.server_utility_comparison(False)
-    # plotter.device_utility_comparison(False)
+    plotter.device_utility_comparison(True)
     # plotter.test_accuracy_plot(False)
