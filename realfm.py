@@ -116,17 +116,25 @@ if __name__ == '__main__':
         trainloader, testloader = load_cifar10(device_num_data, rank, size, train_batch_size, test_batch_size, non_iid,
                                                alpha)
         model = models.resnet18()
+        model.conv1 = torch.nn.Conv2d(
+            3, 64, kernel_size=3, stride=1, padding=1, bias=False
+        )
+        model.maxpool = torch.nn.Identity()
+        # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
+        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
     elif dataset == 'mnist':
         trainloader, testloader = load_mnist(device_num_data, rank, size, train_batch_size, test_batch_size, non_iid,
                                              alpha)
         model = MNIST()
+        optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
+        scheduler = None
     else:
         print('ERROR: Dataset Provided Is Not Valid.')
         exit()
 
     # use ResNet18
     criterion = torch.nn.CrossEntropyLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
     # synchronize models (so they are identical initially)
     FLC.sync_models(model)
@@ -146,7 +154,7 @@ if __name__ == '__main__':
         print('Beginning Local Training...')
 
     a_local = local_training(model, trainloader, testloader, device, criterion, optimizer,
-                             epochs, log_frequency, recorder)
+                             epochs, log_frequency, recorder, scheduler)
 
     MPI.COMM_WORLD.Barrier()
 
@@ -161,7 +169,7 @@ if __name__ == '__main__':
 
     if not nu:
         a_fed = federated_training(model, FLC, trainloader, testloader, device, criterion, optimizer, epochs,
-                                   log_frequency, recorder, local_steps=local_steps)
+                                   log_frequency, recorder, scheduler, local_steps=local_steps)
     else:
         if uniform_payoff:
             b_local_uniform, _ = optimal_data_local(og_marginal_cost, c=1, k=k, a_opt=a_opt, linear=linear_utility,
@@ -174,7 +182,8 @@ if __name__ == '__main__':
         b_local_uniform = data_mapping(b_local_uniform, max_data_per_device)
         steps_per_epoch = (b_local_uniform // train_batch_size) + 1
         a_fed = federated_training_nonuniform(model, FLC, trainloader, testloader, device, criterion, optimizer,
-                                              steps_per_epoch, epochs, log_frequency, recorder, local_steps=local_steps)
+                                              steps_per_epoch, epochs, log_frequency, recorder, scheduler,
+                                              local_steps=local_steps)
 
     MPI.COMM_WORLD.Barrier()
 

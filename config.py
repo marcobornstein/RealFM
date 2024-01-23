@@ -2,9 +2,9 @@ configs = {
     'cifar10': {
         'train_bs': 128,
         'test_bs': 1024,
-        'lr': 1e-3,
+        'lr': 0.05,
         'a_opt': 0.9,
-        'marginal_cost': 2.5e-4,
+        'marginal_cost': 1e-5,
         'local_steps': 6,
         'simple_acc': False,
         'random_seed': 1,
@@ -15,12 +15,12 @@ configs = {
         'epochs': 100,
         'k': 18,
         'file_path': 'output',
-        'non_iid': True,
+        'non_iid': False,
         'dirichlet_value': 0.3,
         'uniform_payoff': True,
         'uniform_cost': True,
         'linear_utility': False,
-        'name': 'realfm-uniform-run1'
+        'name': 'realfm-test'
     },
 
     'mnist': {

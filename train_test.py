@@ -3,7 +3,8 @@ import torch
 import time
 
 
-def local_training(model, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency, recorder):
+def local_training(model, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency, recorder,
+                   scheduler):
     i = 1
     final_accuracy = None
     for epoch in range(1, epochs + 1):  # loop over the dataset multiple times
@@ -53,6 +54,8 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
 
             i += 1
 
+        if scheduler is not None:
+            scheduler.step()
         # spit out the final accuracy after training
         if epoch == epochs:
             final_accuracy = test(model, testloader, device, recorder, epoch, return_acc=True)
@@ -65,7 +68,7 @@ def local_training(model, trainloader, testloader, device, loss_fn, optimizer, e
 
 
 def federated_training(model, communicator, trainloader, testloader, device, loss_fn, optimizer, epochs, log_frequency,
-                       recorder, local_steps=3):
+                       recorder, scheduler, local_steps=3):
     i = 1
     final_accuracy = None
     for epoch in range(1, epochs + 1):  # loop over the dataset multiple times
@@ -122,6 +125,8 @@ def federated_training(model, communicator, trainloader, testloader, device, los
 
             i += 1
 
+        if scheduler is not None:
+            scheduler.step()
         # spit out the final accuracy after training
         communicator.sync_models(model)
         if epoch == epochs:
@@ -136,7 +141,7 @@ def federated_training(model, communicator, trainloader, testloader, device, los
 
 
 def federated_training_nonuniform(model, communicator, trainloader, testloader, device, loss_fn, optimizer, steps_per_e,
-                                  epochs, log_frequency, recorder, local_steps=6):
+                                  epochs, log_frequency, recorder, scheduler, local_steps=6):
     i = 1
     total_steps = steps_per_e * epochs
     while True:
@@ -192,6 +197,8 @@ def federated_training_nonuniform(model, communicator, trainloader, testloader, 
                 recorder.save_to_file(local=False)
 
             if i % steps_per_e == 0:
+                if scheduler is not None:
+                    scheduler.step()
                 communicator.sync_models(model)
                 if i % total_steps == 0:
                     # spit out the final accuracy after training
