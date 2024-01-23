@@ -133,20 +133,12 @@ class RealFMPlotter:
             self.avg_acc_local[i] = accuracy(avg_local_data_per_device, self.a_opt, self.k)
             self.avg_data_local[i] = avg_local_data_per_device
 
-            '''
-            # TODO: Ensure this is correct (maybe make this the case for every value)
-            # if self.avg_acc_local[i] <= np.inf:
-            if self.avg_acc_local[i] <= 0:
-                print('not enough original data')
-                _, local_a = self.get_test_accuracy(exp)
-                self.avg_acc_local[i] = np.average(local_a[:, -1])
-            '''
-
             # get expected amount of data via federated mechanism
             all_device_fed_data = self.fed_b[self.trials * i:(self.trials * (i + 1)), :]
             total_fed_data_avg = np.average(np.sum(all_device_fed_data, axis=1))
             avg_fed_data_per_device = np.average(np.average(all_device_fed_data, axis=1))
 
+            '''
             # if accuracy shaping actually results in less data than local, use just local data since device
             # wouldn't partake in federated mechanism
             # p = all_device_fed_data - all_device_local_data
@@ -158,6 +150,9 @@ class RealFMPlotter:
             else:
                 self.avg_acc_fed[i] = accuracy(total_fed_data_avg, self.a_opt, self.k)
                 self.avg_data_fed[i] = avg_fed_data_per_device
+            '''
+            self.avg_acc_fed[i] = accuracy(total_fed_data_avg, self.a_opt, self.k)
+            self.avg_data_fed[i] = avg_fed_data_per_device
 
             # compute utility
             if exp.find('linear') == 0:
@@ -252,35 +247,14 @@ class RealFMPlotter:
     def device_contribution_comparison(self, save_figure):
 
         x = ['Uniform', 'Non-Uniform C', 'Non-Uniform C&P']
+        width = 0.75
         linear_local_ind = np.array([0, 4, 8])
-        linear_fed_ind = linear_local_ind + 1
-        nonlinear_local_ind = linear_local_ind + 2
-        nonlinear_fed_ind = linear_local_ind + 3
-        tick_ind = np.array([1.5, 5.5, 9.5])
-
-        '''
-        # local baseline (expected)
-        expected_local_b = None
-        if self.num_workers == 16:
-            expected_local_b = 3000
-        elif self.num_workers == 8:
-            expected_local_b = 5500
-
-        num_baselines = len(x)
-        avg_data_fed = np.empty(num_baselines)
-        avg_data_fed[:2] = expected_local_b
-
-        local_ind = np.arange(2)
-        linear_ind = np.arange(2, 4)
-        nonlinear_ind = np.arange(4, 7)
-
-        for i in range(num_baselines - 2):
-            total_fed = np.average(self.fed_b[trials * i:(trials * (i + 1)), :], axis=1)
-            avg_data_fed[i + 2] = np.average(total_fed)
-        '''
+        linear_fed_ind = linear_local_ind + width
+        nonlinear_local_ind = linear_local_ind + 2*width
+        nonlinear_fed_ind = linear_local_ind + 3*width
+        tick_ind = np.mean([linear_local_ind, linear_fed_ind, nonlinear_local_ind, nonlinear_fed_ind], axis=0)
 
         # create axis labels
-        width = 0.4
         fig, ax1 = plt.subplots(figsize=(10, 6))
         ax1.set_ylabel('Average Device Data Contribution', fontsize=18, weight='bold')
         ax1.bar(linear_local_ind, self.avg_data_local[:3], width, color='tab:orange', label='Local Linear')
@@ -296,7 +270,7 @@ class RealFMPlotter:
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
         ax1.tick_params(axis='y', which='major', labelsize=16)
-        plt.legend(fontsize=13)
+        plt.legend(fontsize=13, loc='upper left')
 
         if self.dataset == 'mnist':
             plt.ylim([0, 5e8])
@@ -306,7 +280,11 @@ class RealFMPlotter:
         plt.tight_layout()
 
         if save_figure:
-            title = 'realfm-average-device-contribution-' + str(self.num_workers) + 'devices-' + self.dataset + '.png'
+            title = 'realfm-average-device-contribution' + self.file_end
+            if self.non_iid:
+                title = title + str(self.dirichlet_value) + '.png'
+            else:
+                title = title + '.png'
             plt.savefig(title, dpi=200)
         else:
             plt.show()
@@ -404,14 +382,16 @@ class RealFMPlotter:
 
 if __name__ == '__main__':
     clr = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    num_w = 16
+    num_w = 8
     ds = 'mnist'
-    non_iid = True
+    non_iid = False
     dirichlet_value = 0.3
 
     plotter = RealFMPlotter(ds, num_w, clr, non_iid, dirichlet_value)
     # plotter.contribution_bar_chart(False)
-    #plotter.device_contribution_comparison(False)
+    plotter.device_contribution_comparison(True)
     # plotter.server_utility_comparison(False)
-    plotter.device_utility_comparison(True)
+    # plotter.device_utility_comparison(True)
     # plotter.test_accuracy_plot(False)
+
+    # server plot showcasing the average total amount of data used during federated training?
