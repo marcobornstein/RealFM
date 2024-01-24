@@ -275,7 +275,7 @@ class RealFMPlotter:
         if self.dataset == 'mnist':
             plt.ylim([0, 5e8])
         else:
-            plt.ylim([0, 1e2])
+            plt.ylim([0, 1e5])
 
         plt.tight_layout()
 
@@ -382,16 +382,16 @@ class RealFMPlotter:
 
 if __name__ == '__main__':
     clr = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    num_w = 8
-    ds = 'mnist'
-    non_iid = False
+    num_w = 16
+    ds = 'cifar10'
+    non_iid = True
     dirichlet_value = 0.3
 
     plotter = RealFMPlotter(ds, num_w, clr, non_iid, dirichlet_value)
     # plotter.contribution_bar_chart(False)
-    plotter.device_contribution_comparison(True)
+    plotter.device_contribution_comparison(False)
     # plotter.server_utility_comparison(False)
-    # plotter.device_utility_comparison(True)
+    # plotter.device_utility_comparison(False)
     # plotter.test_accuracy_plot(False)
 
     # server plot showcasing the average total amount of data used during federated training?
