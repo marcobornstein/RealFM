@@ -1,7 +1,7 @@
 configs = {
     'cifar10': {
         'train_bs': 128,
-        'test_bs': 1024,
+        'test_bs': 512,
         'lr': 0.05,
         'a_opt': 0.9,
         'marginal_cost': 1e-5,
@@ -20,7 +20,7 @@ configs = {
         'uniform_payoff': True,
         'uniform_cost': True,
         'linear_utility': False,
-        'name': 'realfm-test'
+        'name': 'realfm-uniform-run1'
     },
 
     'mnist': {

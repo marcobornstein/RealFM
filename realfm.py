@@ -120,9 +120,8 @@ if __name__ == '__main__':
             3, 64, kernel_size=3, stride=1, padding=1, bias=False
         )
         model.maxpool = torch.nn.Identity()
-        # optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
         optimizer = torch.optim.SGD(model.parameters(), lr=learning_rate, momentum=0.9, weight_decay=5e-4)
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=200)
+        scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[50, 75], gamma=0.1)
     elif dataset == 'mnist':
         trainloader, testloader = load_mnist(device_num_data, rank, size, train_batch_size, test_batch_size, non_iid,
                                              alpha)
