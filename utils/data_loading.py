@@ -6,6 +6,8 @@ from mpi4py import MPI
 
 
 def non_iid_dirichlet(device_num_data, targets, alpha, size):
+    # this dirichlet split follows from "FedDC: Federated Learning with Non-IID Data
+    # via Local Drift Decoupling and Correction", although it has been altered for our purposes.
 
     # CIFAR10 has targets as list, so correct targets if its not a torch tensor
     targets = torch.tensor(targets) if isinstance(targets, list) else targets

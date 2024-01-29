@@ -67,8 +67,8 @@ class RealFMPlotter:
             else:
                 self.file_start = 'output/MNIST/' + str(self.num_workers) + 'dev/iid/' + 'realfm-'
                 self.file_end = '-mnist-' + str(self.num_workers) + 'devices'
-            self.epochs = 50
-            self.a_opt = 0.995
+            self.epochs = 100
+            self.a_opt = 0.9975
             self.k = 0.25
         elif dataset == 'cifar10':
             if self.non_iid:
@@ -79,8 +79,8 @@ class RealFMPlotter:
                 self.file_start = 'output/Cifar10/' + str(self.num_workers) + 'dev/iid/' + 'realfm-'
                 self.file_end = '-cifar10-' + str(self.num_workers) + 'devices'
             self.epochs = 100
-            self.a_opt = 0.9
-            self.k = 18
+            self.a_opt = 0.95
+            self.k = 10
         else:
             print('Error')
             exit()
@@ -120,16 +120,18 @@ class RealFMPlotter:
         self.avg_data_fed = np.empty(num_baselines)
         self.avg_acc_fed = np.empty(num_baselines)
         self.avg_utility_fed = np.empty(num_baselines)
+        self.avg_local_dev_utility = np.empty(num_baselines)
+        self.avg_fed_dev_utility = np.empty(num_baselines)
 
         for i, exp in enumerate(self.experiments):
 
             # get initial local amount of data given the marginal cost
             all_device_local_data = self.local_b[self.trials * i:(self.trials * (i + 1)), :]
+            all_device_mc = self.mc[self.trials * i:(self.trials * (i + 1)), :]
             total_local_data_avg = np.average(np.sum(all_device_local_data, axis=1))
             avg_local_data_per_device = np.average(np.average(all_device_local_data, axis=1))
 
             # store average local accuracy and data
-
             self.avg_acc_local[i] = accuracy(avg_local_data_per_device, self.a_opt, self.k)
             self.avg_data_local[i] = avg_local_data_per_device
 
@@ -138,19 +140,6 @@ class RealFMPlotter:
             total_fed_data_avg = np.average(np.sum(all_device_fed_data, axis=1))
             avg_fed_data_per_device = np.average(np.average(all_device_fed_data, axis=1))
 
-            '''
-            # if accuracy shaping actually results in less data than local, use just local data since device
-            # wouldn't partake in federated mechanism
-            # p = all_device_fed_data - all_device_local_data
-            # print(p[:3, :])
-            if total_fed_data_avg < total_local_data_avg:
-                print('not enough epochs to get fed acc large enough')
-                self.avg_acc_fed[i] = self.avg_acc_local[i]
-                self.avg_data_fed[i] = avg_local_data_per_device
-            else:
-                self.avg_acc_fed[i] = accuracy(total_fed_data_avg, self.a_opt, self.k)
-                self.avg_data_fed[i] = avg_fed_data_per_device
-            '''
             self.avg_acc_fed[i] = accuracy(total_fed_data_avg, self.a_opt, self.k)
             self.avg_data_fed[i] = avg_fed_data_per_device
 
@@ -158,13 +147,21 @@ class RealFMPlotter:
             if exp.find('linear') == 0:
                 # linear utility for local and fed
                 self.avg_utility_fed[i] = self.avg_acc_fed[i]
+                self.avg_fed_dev_utility[i] = self.avg_utility_fed[i]
                 self.avg_utility_local[i] = self.avg_acc_local[i]
+                self.avg_local_dev_utility[i] = self.avg_utility_local[i]
             else:
                 # non-linear utility for local and fed
                 self.avg_utility_fed[i] = accuracy_utility(self.avg_acc_fed[i], 1, 2)
+                self.avg_fed_dev_utility[i] = self.avg_utility_fed[i]
                 self.avg_utility_local[i] = accuracy_utility(self.avg_acc_local[i], 1, 2)
+                self.avg_local_dev_utility[i] = self.avg_utility_local[i]
 
-    def device_utility_comparison(self, save_figure):
+            # update device utility fed & local
+            self.avg_fed_dev_utility[i] -= np.average(np.average(all_device_fed_data * all_device_mc, axis=1))
+            self.avg_local_dev_utility[i] = -np.average(np.average(all_device_local_data * all_device_mc, axis=1))
+
+    def server_utility_comparison(self, save_figure):
 
         x = ['Uniform', 'Non-Uniform C', 'Non-Uniform C&P']
 
@@ -178,28 +175,28 @@ class RealFMPlotter:
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
         # create axis labels
-        ax1.set_ylabel('Average Device Utility via Accuracy', fontsize=18, weight='bold')
-        ax1.bar(linear_local_ind, self.avg_utility_local[:3], width, color='tab:orange', label='Local Linear')
+        ax1.set_ylabel('Server Utility', fontsize=20, weight='bold')
+        ax1.bar(nonlinear_fed_ind, self.avg_utility_fed[3:], width, color='tab:blue', label='Non-linear RealFM')
         ax1.bar(linear_fed_ind, self.avg_utility_fed[:3], width, color='tab:red', label='Linear RealFM')
         ax1.bar(nonlinear_local_ind, self.avg_utility_local[3:], width, color='tab:green', label='Local Non-linear')
-        ax1.bar(nonlinear_fed_ind, self.avg_utility_fed[3:], width, color='tab:blue', label='Non-linear RealFM')
+        ax1.bar(linear_local_ind, self.avg_utility_local[:3], width, color='tab:orange', label='Local Linear')
 
         if self.dataset == 'mnist':
-            plt.ylim([0, 1e5])
+            plt.ylim([0, 2e5])
         else:
-            plt.ylim([0, 1e2])
+            plt.ylim([0, 2e2])
 
-        plt.xticks(tick_ind, x, weight='bold', fontsize=15)
+        plt.xticks(tick_ind, x, weight='bold', fontsize=20)
         ax1.grid(axis='y', alpha=0.25)
         ax1.set_yscale('symlog')
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-        ax1.tick_params(axis='y', which='major', labelsize=16)
-        plt.legend(fontsize=13, loc='upper left')
+        ax1.tick_params(axis='y', which='major', labelsize=18)
+        # plt.legend(fontsize=13, loc='upper left')
         plt.tight_layout()
 
         if save_figure:
-            title = 'realfm-average-device-utility' + self.file_end
+            title = 'realfm-average-server-utility' + self.file_end
             if self.non_iid:
                 title = title + str(self.dirichlet_value) + '.png'
             else:
@@ -208,38 +205,41 @@ class RealFMPlotter:
         else:
             plt.show()
 
-    def server_utility_comparison(self, save_figure):
+    def device_utility_comparison(self, save_figure):
 
         x = ['Uniform', 'Non-Uniform C', 'Non-Uniform C&P']
-
+        width = 0.5
         linear_fed_ind = np.array([0, 1.5, 3])
-        nonlinear_fed_ind = linear_fed_ind + 0.6
+        nonlinear_fed_ind = linear_fed_ind + width
         tick_ind = (linear_fed_ind + nonlinear_fed_ind) / 2
 
-        width = 0.5
         fig, ax1 = plt.subplots(figsize=(10, 6))
 
         # create axis labels
-        ax1.set_ylabel('Server Utility', fontsize=18, weight='bold')
-        ax1.bar(linear_fed_ind, self.avg_utility_fed[:3], width, color='tab:red', label='Linear RealFM')
-        ax1.bar(nonlinear_fed_ind, self.avg_utility_fed[3:], width, color='tab:blue', label='Non-linear RealFM')
+        ax1.set_ylabel('Device Utility', fontsize=20, weight='bold')
+        ax1.bar(nonlinear_fed_ind, self.avg_fed_dev_utility[3:], width, color='tab:blue', label='Non-linear RealFM')
+        ax1.bar(linear_fed_ind, self.avg_fed_dev_utility[:3], width, color='tab:red', label='Linear RealFM')
 
         if self.dataset == 'mnist':
-            plt.ylim([0, 1e5])
+            plt.ylim([0, 2e5])
         else:
-            plt.ylim([0, 1e2])
+            plt.ylim([0, 2e2])
 
-        plt.xticks(tick_ind, x, weight='bold', fontsize=15)
+        plt.xticks(tick_ind, x, weight='bold', fontsize=20)
         ax1.grid(axis='y', alpha=0.25)
         ax1.set_yscale('symlog')
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-        ax1.tick_params(axis='y', which='major', labelsize=16)
-        plt.legend(fontsize=13)
+        ax1.tick_params(axis='y', which='major', labelsize=18)
+        # plt.legend(fontsize=13)
         plt.tight_layout()
 
         if save_figure:
-            title = 'realfm-server-utility-' + str(self.num_workers) + 'devices-' + self.dataset + '.png'
+            title = 'realfm-device-utility' + self.file_end
+            if self.non_iid:
+                title = title + str(self.dirichlet_value) + '.png'
+            else:
+                title = title + '.png'
             plt.savefig(title, dpi=200)
         else:
             plt.show()
@@ -256,24 +256,26 @@ class RealFMPlotter:
 
         # create axis labels
         fig, ax1 = plt.subplots(figsize=(10, 6))
-        ax1.set_ylabel('Average Device Data Contribution', fontsize=18, weight='bold')
-        ax1.bar(linear_local_ind, self.avg_data_local[:3], width, color='tab:orange', label='Local Linear')
+
+        ax1.set_ylabel('Average Device Data Contribution', fontsize=20, weight='bold')
+        ax1.bar(nonlinear_fed_ind, self.avg_data_fed[3:], width, color='tab:blue', label='Non-linear RealFM')
         ax1.bar(linear_fed_ind, self.avg_data_fed[:3], width, color='tab:red', label='Linear RealFM')
         ax1.bar(nonlinear_local_ind, self.avg_data_local[3:], width, color='tab:green', label='Local Non-linear')
-        ax1.bar(nonlinear_fed_ind, self.avg_data_fed[3:], width, color='tab:blue', label='Non-linear RealFM')
+        ax1.bar(linear_local_ind, self.avg_data_local[:3], width, color='tab:orange', label='Local Linear')
+
         ax1.grid(axis='y', alpha=0.25)
         ax1.set_yscale('log')
 
-        plt.xticks(tick_ind, x, weight='bold', fontsize=15)
+        plt.xticks(tick_ind, x, weight='bold', fontsize=20)
         ax1.grid(axis='y', alpha=0.25)
         ax1.set_yscale('symlog')
         ax1.yaxis.tick_right()
         ax1.yaxis.set_label_position("right")
-        ax1.tick_params(axis='y', which='major', labelsize=16)
-        plt.legend(fontsize=13, loc='upper left')
+        ax1.tick_params(axis='y', which='major', labelsize=18)
+        # plt.legend(fontsize=13, loc='upper left')
 
         if self.dataset == 'mnist':
-            plt.ylim([0, 5e8])
+            plt.ylim([0, 1e9])
         else:
             plt.ylim([0, 1e5])
 
@@ -289,10 +291,10 @@ class RealFMPlotter:
         else:
             plt.show()
 
-    def test_accuracy_plot(self, save_figure):
+    def test_accuracy_plot(self, save_figure, exp='uniform'):
 
         # get test accuracies
-        fed_accs, local_accs = self.get_test_accuracy('uniform')
+        fed_accs, local_accs = self.get_test_accuracy(exp)
 
         # compute error bars over all three runs
         y_mean, y_min, y_max = generate_confidence_interval(fed_accs)
@@ -308,13 +310,9 @@ class RealFMPlotter:
         plt.plot(self.iters, y_mean_local, label='Average Local Training', color='r')
         plt.fill_between(self.iters, y_min_local, y_max_local, alpha=0.2, color='r')
 
-        # title = 'Federated Training vs. Average Local Training for CIFAR-10'
-        # plt.title(title)
-        # plt.ylim([0.225, 0.48])
-
         plt.legend(loc='lower right')
-        plt.ylabel('Test Accuracy', fontsize=13)
-        plt.xlabel('Epochs', fontsize=13)
+        plt.ylabel('Test Accuracy', fontsize=20, weight='bold')
+        plt.xlabel('Epochs', fontsize=20, weight='bold')
         plt.xlim([1, self.epochs])
         plt.xscale("log")
         plt.grid(which="both", alpha=0.25)
@@ -322,11 +320,15 @@ class RealFMPlotter:
         if self.dataset == 'mnist':
             plt.ylim([0.1, 1])
         else:
-            plt.ylim([0.075, 0.76])
+            plt.ylim([0.075, 0.85])
 
         # plt.tight_layout()
         if save_figure:
-            savefilename = 'accuracy-comp-' + self.file_end + '.png'
+            savefilename = 'accuracy-comp' + self.file_end
+            if self.non_iid:
+                savefilename = savefilename + str(self.dirichlet_value) + '.png'
+            else:
+                savefilename = savefilename + '.png'
             plt.savefig(savefilename, dpi=200)
         else:
             plt.show()
@@ -334,7 +336,6 @@ class RealFMPlotter:
     def get_test_accuracy(self, exp):
         fed_accs = []
         local_accs = []
-        # each_dev_local_a = []
 
         for trial in range(1, self.trials + 1):
             file = self.file_start + exp + '-run' + str(trial) + self.file_end
@@ -342,12 +343,30 @@ class RealFMPlotter:
             local_test_acc = unpack_data(file, self.epochs, self.num_workers, datatype='local-epoch-acc-top1.log')
             fed_accs.append(fed_test_acc[:, 0])
             local_accs.append(np.mean(local_test_acc, axis=1))
-            # each_dev_local_a.append(local_test_acc[-1, :])
 
         fed_accs = np.stack(fed_accs, axis=0)
         local_accs = np.stack(local_accs, axis=0)
         return fed_accs, local_accs
 
+if __name__ == '__main__':
+    clr = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
+    num_w = 16
+    ds = 'mnist'
+    non_iid = True
+    dirichlet_value = 0.3
+
+    plotter = RealFMPlotter(ds, num_w, clr, non_iid, dirichlet_value)
+    # plotter.contribution_bar_chart(False)
+    # plotter.device_contribution_comparison(True)
+    # plotter.server_utility_comparison(True)
+    plotter.device_utility_comparison(True)
+    # plotter.test_accuracy_plot(True)
+
+    # server plot showcasing the average total amount of data used during federated training?
+
+
+
+'''
     def contribution_bar_chart(self, save_figure):
 
         for i, exp in enumerate(self.experiments):
@@ -379,19 +398,4 @@ class RealFMPlotter:
                 plt.savefig(savefilename, dpi=200)
             else:
                 plt.show()
-
-if __name__ == '__main__':
-    clr = ['r', 'b', 'g', 'orange', 'pink', 'cyan', 'yellow', 'purple']
-    num_w = 8
-    ds = 'cifar10'
-    non_iid = True
-    dirichlet_value = 0.3
-
-    plotter = RealFMPlotter(ds, num_w, clr, non_iid, dirichlet_value)
-    # plotter.contribution_bar_chart(False)
-    plotter.device_contribution_comparison(True)
-    # plotter.server_utility_comparison(False)
-    # plotter.device_utility_comparison(True)
-    # plotter.test_accuracy_plot(False)
-
-    # server plot showcasing the average total amount of data used during federated training?
+    '''
