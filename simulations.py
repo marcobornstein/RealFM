@@ -60,7 +60,6 @@ def optimal_data_plot(x_init, k_vals, costs, savefig=True):
     plt.xlabel('Marginal Cost', fontsize=18, weight='bold')
     plt.ylabel('Data Contribution ($m_i$)', fontsize=18, weight='bold')
     plt.grid()
-    # plt.ylim([100, 1e10])
 
     # get handles and labels
     handles, labels = plt.gca().get_legend_handles_labels()
@@ -110,6 +109,3 @@ if __name__ == '__main__':
 
     optimal_data_plot(x_init, k_vals, costs, savefig=True)
     # utility_plots(0.0001, savefig=True)
-
-
-

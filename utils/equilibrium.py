@@ -76,3 +76,7 @@ def optimal_data_fed(a_local, a_fed, b_local, mc, c=1, linear=False):
     sol = scipy.optimize.root(accuracy_shaping_max, np.array(b_local), args=(b_local, a_local, a_fed, mc, c, linear))
     num_data = int(sol.x)
     return num_data
+
+
+def data_mapping(b, data_per_device, k=0.0002):
+    return int(data_per_device * (1 - np.exp(-k * b)))
