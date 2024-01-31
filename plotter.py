@@ -356,46 +356,7 @@ if __name__ == '__main__':
     dirichlet_value = 0.3
 
     plotter = RealFMPlotter(ds, num_w, clr, non_iid, dirichlet_value)
-    # plotter.contribution_bar_chart(False)
     # plotter.device_contribution_comparison(True)
     # plotter.server_utility_comparison(True)
     plotter.device_utility_comparison(True)
     # plotter.test_accuracy_plot(True)
-
-    # server plot showcasing the average total amount of data used during federated training?
-
-
-
-'''
-    def contribution_bar_chart(self, save_figure):
-
-        for i, exp in enumerate(self.experiments):
-
-            # plot data
-            local_b_mean = np.nanmean(self.local_b[i * 3:(i + 1) * 3, :], axis=0)
-            fed_b_mean = np.nanmean(self.fed_b[i * 3:(i + 1) * 3, :], axis=0)
-
-            # bar plot
-            added_b = fed_b_mean - local_b_mean
-            devices = np.arange(1, self.num_workers + 1)
-            plt.figure()
-            plt.bar(devices, local_b_mean, label='Local Optimal Contributions $(g_i^o)$')
-            bar = plt.bar(devices, added_b, bottom=local_b_mean, label='Incentivized Contributions $(g_i^* - g_i^o)$')
-            plt.xlabel('Devices', fontsize=13)
-            plt.ylabel('Average Gradient Contribution ($g_i$)', fontsize=13)
-            plt.xticks(devices)
-            plt.legend(loc='lower left', fontsize=10)
-            # plt.ylim([0, 5500])
-
-            for i, rect in enumerate(bar):
-                val = 100 * (added_b[i] / local_b_mean[i])
-                height = rect.get_height() + local_b_mean[i]
-                plt.text(rect.get_x() + rect.get_width() / 2.0, height, f'+{val:.0f}%', ha='center', va='bottom',
-                         fontsize=6)
-
-            if save_figure:
-                savefilename = str(self.num_workers) + 'device-bar-mean-' + exp + '-' + self.dataset + '.png'
-                plt.savefig(savefilename, dpi=200)
-            else:
-                plt.show()
-    '''

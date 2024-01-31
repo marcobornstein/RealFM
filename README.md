@@ -1,5 +1,7 @@
 # RealFM
-Repository for RealFM.
+Repository for RealFM: A Realistic Mechanism to Incentivize Federated Participation and Contribution.
+
+## Running the Code
 
 The code can be run with differing parameters by adjusting the config.py script.
 

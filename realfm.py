@@ -192,4 +192,3 @@ if __name__ == '__main__':
     # print and store optimal amount of data
     print(f' [rank {rank}] initial local optimal data: {b_local_mapped}, federated mechanism optimal data: {b_fed}')
     recorder.save_data_contributions(b_local, b_local_mapped, b_fed)
-    # recorder.save_data_contributions(u_local, u_fed)
